@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmitOnError": true,
+    "strict": true,
+    "pretty": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "jsx": "react",
+    "newLine": "LF",
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "Node",
+    "lib": ["esnext", "DOM"],
+    "module": "esnext",
+    "target": "esnext"
+  }
+}
