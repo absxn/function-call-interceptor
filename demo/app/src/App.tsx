@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css";
+import InterceptorModal from "./InterceptorModal";
 
 interface AppState {
   counterA: number | null;
@@ -17,6 +18,7 @@ class App extends React.Component<any, AppState> {
 
     return (
       <div className="App">
+        <InterceptorModal visible={disabled} />
         <button
           disabled={disabled}
           onClick={() => {

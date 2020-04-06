@@ -1,0 +1,20 @@
+.interceptorModal h1,
+.interceptorModal h2 {
+  margin: 0 0 10px 0;
+}
+
+.interceptorModal {
+  border: 1px solid red;
+  margin: 20px;
+  padding: 20px;
+}
+
+.interceptorModal button {
+  width: auto;
+  margin: 0;
+  padding: 3px 5px;
+}
+
+.interceptorModal.disabled {
+  background-color: #eee;
+}
