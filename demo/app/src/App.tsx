@@ -1,26 +1,51 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+interface AppState {
+  counterA: number | null;
+  counterB: number | null;
+}
+
+class App extends React.Component<any, AppState> {
+  state = {
+    counterA: 0,
+    counterB: 0,
+  };
+
+  render() {
+    const disabled = this.state.counterA === null;
+
+    return (
+      <div className="App">
+        <button
+          disabled={disabled}
+          onClick={() => {
+            const counter = this.state.counterA;
+            this.setState(
+              {
+                counterA: null,
+              },
+              () => {
+                this.getIncrement().then((increment) => {
+                  this.setState({
+                    counterA: counter + increment,
+                  });
+                });
+              }
+            );
+          }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+          Intercept call{disabled && " (waiting)"}
+        </button>
+      </div>
+    );
+  }
+
+  getIncrement(): Promise<number> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(1), 200);
+    });
+  }
 }
 
 export default App;
