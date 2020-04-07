@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import InterceptorModal from "./InterceptorModal";
+import InterceptorModal, { intercept } from "./InterceptorModal";
 
 interface AppState {
   counterA: number | null;
@@ -18,7 +18,6 @@ class App extends React.Component<any, AppState> {
 
     return (
       <div className="App">
-        <InterceptorModal visible={disabled} />
         <button
           disabled={disabled}
           onClick={() => {
@@ -28,7 +27,7 @@ class App extends React.Component<any, AppState> {
                 counterA: null,
               },
               () => {
-                this.getIncrement().then((increment) => {
+                intercept(this.getIncrement)(1).then((increment) => {
                   this.setState({
                     counterA: counter + increment,
                   });
@@ -43,9 +42,9 @@ class App extends React.Component<any, AppState> {
     );
   }
 
-  getIncrement(): Promise<number> {
+  getIncrement(increment: number): Promise<number> {
     return new Promise((resolve) => {
-      setTimeout(() => resolve(1), 200);
+      setTimeout(() => resolve(increment), 200);
     });
   }
 }
