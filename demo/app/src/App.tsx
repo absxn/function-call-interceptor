@@ -14,12 +14,13 @@ class App extends React.Component<any, AppState> {
   };
 
   render() {
-    const disabled = this.state.counterA === null;
+    const disabledA = this.state.counterA === null;
+    const disabledB = this.state.counterB === null;
 
     return (
       <div className="App">
         <button
-          disabled={disabled}
+          disabled={disabledA}
           onClick={() => {
             const counter = this.state.counterA;
             this.setState(
@@ -36,7 +37,27 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          Intercept call{disabled && " (waiting)"}
+          (A) Intercept call{disabledA && " (waiting)"}
+        </button>
+        <button
+          disabled={disabledB}
+          onClick={() => {
+            const counter = this.state.counterB;
+            this.setState(
+              {
+                counterB: null,
+              },
+              () => {
+                intercept(this.getIncrement)(1).then((increment) => {
+                  this.setState({
+                    counterB: counter + increment,
+                  });
+                });
+              }
+            );
+          }}
+        >
+          (B) Intercept call{disabledA && " (waiting)"}
         </button>
       </div>
     );

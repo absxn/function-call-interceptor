@@ -6,6 +6,7 @@ import ReactDOM from "react-dom";
 interface InterceptorModalProps {
   visible: boolean;
   onResponse: () => void;
+  queue: Event[];
 }
 
 export default class InterceptorModal extends React.Component<
@@ -18,6 +19,12 @@ export default class InterceptorModal extends React.Component<
         disabled={!this.props.visible}
       >
         <h1>Intercepted</h1>
+        <h2>Queue</h2>
+        <ol>
+          {this.props.queue.map((e, index) => (
+            <li key={index}>{e.type}</li>
+          ))}
+        </ol>
         <h2>Call</h2>
         <pre>Foo</pre>
         <button onClick={this.props.onResponse}>Dispatch</button>
@@ -57,21 +64,29 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
 }
 
 export function mountInterceptorClient(domId: string) {
-  function respond() {
-    eventBus.dispatchEvent(new Event("response"));
+  const queue: Event[] = [];
 
-    const elementById = document.getElementById(domId);
-    if (elementById === null) {
-      throw new Error(`Can't find interceptor root element with #${domId}`);
-    } else {
-      ReactDOM.unmountComponentAtNode(elementById);
+  function respond() {
+    queue.splice(0, 1);
+
+    if (queue.length === 0) {
+      eventBus.dispatchEvent(new Event("response"));
+
+      const elementById = document.getElementById(domId);
+      if (elementById === null) {
+        throw new Error(`Can't find interceptor root element with #${domId}`);
+      } else {
+        ReactDOM.unmountComponentAtNode(elementById);
+      }
     }
   }
 
   eventBus.addEventListener("call", function requestListener(event) {
+    queue.push(event);
+
     return ReactDOM.render(
       <React.StrictMode>
-        <InterceptorModal visible={true} onResponse={respond} />
+        <InterceptorModal queue={queue} visible={true} onResponse={respond} />
       </React.StrictMode>,
       document.getElementById(domId)
     );
