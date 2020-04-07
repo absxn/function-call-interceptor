@@ -7,6 +7,11 @@ interface AppState {
   counterB: number | null;
 }
 
+interface Incrementer {
+  from: string;
+  increment: number;
+}
+
 class App extends React.Component<any, AppState> {
   state = {
     counterA: 0,
@@ -28,11 +33,13 @@ class App extends React.Component<any, AppState> {
                 counterA: null,
               },
               () => {
-                intercept(this.getIncrement)(1).then((increment) => {
-                  this.setState({
-                    counterA: counter + increment,
-                  });
-                });
+                intercept(this.getIncrement)({ from: "A", increment: 1 }).then(
+                  (increment: Incrementer) => {
+                    this.setState({
+                      counterA: counter + increment.increment,
+                    });
+                  }
+                );
               }
             );
           }}
@@ -48,11 +55,13 @@ class App extends React.Component<any, AppState> {
                 counterB: null,
               },
               () => {
-                intercept(this.getIncrement)(1).then((increment) => {
-                  this.setState({
-                    counterB: counter + increment,
-                  });
-                });
+                intercept(this.getIncrement)({ from: "B", increment: 2 }).then(
+                  (increment: Incrementer) => {
+                    this.setState({
+                      counterB: counter + increment.increment,
+                    });
+                  }
+                );
               }
             );
           }}
@@ -63,7 +72,7 @@ class App extends React.Component<any, AppState> {
     );
   }
 
-  getIncrement(increment: number): Promise<number> {
+  getIncrement(increment: Incrementer): Promise<Incrementer> {
     return new Promise((resolve) => {
       setTimeout(() => resolve(increment), 200);
     });

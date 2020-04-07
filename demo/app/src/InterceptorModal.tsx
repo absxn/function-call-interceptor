@@ -3,10 +3,14 @@ import cx from "classnames";
 import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
 
+interface CallEvent extends Event {
+  args?: any[];
+}
+
 interface InterceptorModalProps {
   visible: boolean;
   onResponse: () => void;
-  queue: Event[];
+  queue: CallEvent[];
 }
 
 export default class InterceptorModal extends React.Component<
@@ -22,7 +26,9 @@ export default class InterceptorModal extends React.Component<
         <h2>Queue</h2>
         <ol>
           {this.props.queue.map((e, index) => (
-            <li key={index}>{e.type}</li>
+            <li key={index}>
+              call(<code>{JSON.stringify(e.args)}</code>)
+            </li>
           ))}
         </ol>
         <h2>Call</h2>
@@ -38,10 +44,6 @@ export default class InterceptorModal extends React.Component<
 
 const eventBus = new EventTarget();
 
-interface CallEvent extends Event {
-  options: number;
-}
-
 export function intercept<A extends any, R extends Promise<V>, V extends any>(
   cb: (() => R) | ((...args: A[]) => R)
 ): (() => Promise<V>) | ((...args: A[]) => Promise<V>) {
@@ -50,7 +52,7 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
     const returnValue = a.length === 0 ? cb() : cb(...(a as A[]));
     console.log(`intercept(${a.join(", ")})`);
     const event = new Event("call") as CallEvent;
-    event.options = 1;
+    event.args = a;
     eventBus.dispatchEvent(event);
 
     return new Promise<V>((resolve) => {
@@ -63,13 +65,24 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
   };
 }
 
+function render(domId: string, queue: CallEvent[], respond: () => void) {
+  return ReactDOM.render(
+    <React.StrictMode>
+      <InterceptorModal queue={queue} visible={true} onResponse={respond} />
+    </React.StrictMode>,
+    document.getElementById(domId)
+  );
+}
+
 export function mountInterceptorClient(domId: string) {
   const queue: Event[] = [];
 
   function respond() {
     queue.splice(0, 1);
 
-    if (queue.length === 0) {
+    if (queue.length > 0) {
+      render(domId, queue, respond);
+    } else {
       eventBus.dispatchEvent(new Event("response"));
 
       const elementById = document.getElementById(domId);
@@ -84,11 +97,6 @@ export function mountInterceptorClient(domId: string) {
   eventBus.addEventListener("call", function requestListener(event) {
     queue.push(event);
 
-    return ReactDOM.render(
-      <React.StrictMode>
-        <InterceptorModal queue={queue} visible={true} onResponse={respond} />
-      </React.StrictMode>,
-      document.getElementById(domId)
-    );
+    render(domId, queue, respond);
   });
 }
