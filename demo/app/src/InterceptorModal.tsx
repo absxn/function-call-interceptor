@@ -3,8 +3,11 @@ import cx from "classnames";
 import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
 
+type Trigger = "call" | "return" | "both";
+
 interface CallEvent extends Event {
   args?: any[];
+  trigger: Trigger;
 }
 
 interface InterceptorModalProps {
@@ -66,7 +69,8 @@ export default class InterceptorModal extends React.Component<
 const eventBus = new EventTarget();
 
 export function intercept<A extends any, R extends Promise<V>, V extends any>(
-  cb: (() => R) | ((...args: A[]) => R)
+  cb: (() => R) | ((...args: A[]) => R),
+  trigger: Trigger
 ): (() => Promise<V>) | ((...args: A[]) => Promise<V>) {
   return function () {
     const a = Array.from(arguments);
@@ -74,6 +78,7 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
     console.log(`intercept(${a.join(", ")})`);
     const event = new Event("call") as CallEvent;
     event.args = a;
+    event.trigger = trigger;
     eventBus.dispatchEvent(event);
 
     return new Promise<V>((resolve) => {
@@ -96,7 +101,7 @@ function render(domId: string, queue: CallEvent[], respond: () => void) {
 }
 
 export function mountInterceptorClient(domId: string) {
-  const queue: Event[] = [];
+  const queue: CallEvent[] = [];
 
   function respond() {
     queue.splice(0, 1);
@@ -116,7 +121,10 @@ export function mountInterceptorClient(domId: string) {
   }
 
   eventBus.addEventListener("call", function requestListener(event) {
-    queue.push(event);
+    // TODO: Ensure type
+    const callEvent = event as CallEvent;
+
+    queue.push(callEvent);
 
     render(domId, queue, respond);
   });

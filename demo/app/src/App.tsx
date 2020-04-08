@@ -33,7 +33,7 @@ class App extends React.Component<any, AppState> {
                 counterA: null,
               },
               () => {
-                intercept(this.getIncrement)({ from: "A", increment: 1 }).then(
+                intercept(this.getIncrement, "call")({ from: "A", increment: 1 }).then(
                   (increment: Incrementer) => {
                     this.setState({
                       counterA: counter + increment.increment,
@@ -55,7 +55,7 @@ class App extends React.Component<any, AppState> {
                 counterB: null,
               },
               () => {
-                intercept(this.getIncrement)({ from: "B", increment: 2 }).then(
+                intercept(this.getIncrement, "return")({ from: "B", increment: 2 }).then(
                   (increment: Incrementer) => {
                     this.setState({
                       counterB: counter + increment.increment,
@@ -66,7 +66,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (B) Intercept call{disabledA && " (waiting)"}
+          (B) Intercept return{disabledA && " (waiting)"}
         </button>
       </div>
     );
