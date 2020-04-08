@@ -6,14 +6,24 @@ import ReactDOM from "react-dom";
 type Trigger = "call" | "return" | "both";
 
 interface CallEvent extends Event {
+  trigger: "call";
   args?: any[];
-  trigger: Trigger;
 }
+
+interface ReturnEvent extends Event {
+  trigger: "return";
+  args?: any[];
+  rv?: any;
+}
+
+type InterceptEvent = CallEvent | ReturnEvent;
+
+type EventQueue = Array<InterceptEvent>;
 
 interface InterceptorModalProps {
   visible: boolean;
   onResponse: () => void;
-  queue: CallEvent[];
+  queue: EventQueue;
 }
 
 interface InterceptorModalState {
@@ -50,7 +60,14 @@ export default class InterceptorModal extends React.Component<
                   this.setState({ activeEvent: index });
                 }}
               >
-                call(<code>{JSON.stringify(e.args)}</code>)
+                {e.trigger === "call" ? (
+                  <code>call({JSON.stringify(e.args)}) => ?</code>
+                ) : (
+                  <code>
+                    return({JSON.stringify(e.args)}) =>{" "}
+                    {JSON.stringify(e.returnValue)}
+                  </code>
+                )}
               </span>
             </li>
           ))}
@@ -72,26 +89,63 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
   cb: (() => R) | ((...args: A[]) => R),
   trigger: Trigger
 ): (() => Promise<V>) | ((...args: A[]) => Promise<V>) {
-  return function () {
-    const a = Array.from(arguments);
-    const returnValue = a.length === 0 ? cb() : cb(...(a as A[]));
-    console.log(`intercept(${a.join(", ")})`);
-    const event = new Event("call") as CallEvent;
-    event.args = a;
-    event.trigger = trigger;
-    eventBus.dispatchEvent(event);
+  return async function () {
+    const originalArgs = Array.from(arguments);
 
-    return new Promise<V>((resolve) => {
-      function responseListener() {
-        eventBus.removeEventListener("response", responseListener);
-        resolve(returnValue);
+    // Call interceptor
+    const interceptedArgs = await new Promise<A[]>((resolve) => {
+      if (trigger === "call" || trigger === "both") {
+        const event = new Event("call") as CallEvent;
+        event.args = originalArgs;
+        event.trigger = "call";
+
+        function responseListener(event: Event) {
+          const callEvent = event as CallEvent;
+          eventBus.removeEventListener("response", responseListener);
+          resolve(callEvent.args);
+        }
+
+        eventBus.addEventListener("response", responseListener);
+
+        eventBus.dispatchEvent(event);
+      } else {
+        resolve(originalArgs);
       }
-      eventBus.addEventListener("response", responseListener);
+    });
+
+    // Return interceptor
+    return new Promise<V>((resolve) => {
+      const returnValue =
+        interceptedArgs.length === 0 ? cb() : cb(...(interceptedArgs as A[]));
+
+      console.log(
+        `intercepted(${interceptedArgs.join(", ")}) => ${JSON.stringify(
+          returnValue
+        )}`
+      );
+
+      if (trigger === "return" || trigger === "both") {
+        const event = new Event("call") as ReturnEvent;
+        event.trigger = "return";
+        event.args = interceptedArgs;
+        event.rv = returnValue;
+        eventBus.dispatchEvent(event);
+
+        function responseListener(event: Event) {
+          const returnEvent = event as ReturnEvent;
+          eventBus.removeEventListener("response", responseListener);
+          resolve(returnEvent.rv);
+        }
+
+        eventBus.addEventListener("response", responseListener);
+      } else {
+        return returnValue;
+      }
     });
   };
 }
 
-function render(domId: string, queue: CallEvent[], respond: () => void) {
+function render(domId: string, queue: EventQueue, respond: () => void) {
   return ReactDOM.render(
     <React.StrictMode>
       <InterceptorModal queue={queue} visible={true} onResponse={respond} />
@@ -101,7 +155,7 @@ function render(domId: string, queue: CallEvent[], respond: () => void) {
 }
 
 export function mountInterceptorClient(domId: string) {
-  const queue: CallEvent[] = [];
+  const queue: EventQueue = [];
 
   function respond() {
     queue.splice(0, 1);
