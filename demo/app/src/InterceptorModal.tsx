@@ -13,10 +13,22 @@ interface InterceptorModalProps {
   queue: CallEvent[];
 }
 
+interface InterceptorModalState {
+  activeEvent: number | -1;
+}
+
 export default class InterceptorModal extends React.Component<
-  InterceptorModalProps
+  InterceptorModalProps,
+  InterceptorModalState
 > {
+  state = {
+    activeEvent: 0,
+  };
+
   render() {
+    const activeEvent = this.state.activeEvent;
+    const queue = this.props.queue;
+
     return (
       <fieldset
         className={cx("interceptorModal", { disabled: !this.props.visible })}
@@ -24,15 +36,24 @@ export default class InterceptorModal extends React.Component<
       >
         <h1>Intercepted</h1>
         <h2>Queue</h2>
-        <ol>
-          {this.props.queue.map((e, index) => (
-            <li key={index}>
-              call(<code>{JSON.stringify(e.args)}</code>)
+        <ol className="eventSelector">
+          {queue.map((e, index) => (
+            <li
+              key={index}
+              className={cx({ activeEvent: index === activeEvent })}
+            >
+              <span
+                onClick={() => {
+                  this.setState({ activeEvent: index });
+                }}
+              >
+                call(<code>{JSON.stringify(e.args)}</code>)
+              </span>
             </li>
           ))}
         </ol>
         <h2>Call</h2>
-        <pre>Foo</pre>
+        <pre>{JSON.stringify(queue[activeEvent])}</pre>
         <button onClick={this.props.onResponse}>Dispatch</button>
         <h2>Return</h2>
         <pre>Bar</pre>

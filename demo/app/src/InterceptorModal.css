@@ -18,3 +18,16 @@
 .interceptorModal.disabled {
   background-color: #eee;
 }
+
+.interceptorModal .activeEvent {
+  color: red;
+  text-decoration: underline;
+}
+
+.interceptorModal .eventSelector li {
+  cursor: pointer;
+}
+
+.interceptorModal .eventSelector li:hover {
+  text-decoration: underline;
+}
