@@ -5,6 +5,7 @@ import InterceptorModal, { intercept } from "./InterceptorModal";
 interface AppState {
   counterA: number | null;
   counterB: number | null;
+  counterC: number | null;
 }
 
 interface Incrementer {
@@ -16,11 +17,13 @@ class App extends React.Component<any, AppState> {
   state = {
     counterA: 0,
     counterB: 0,
+    counterC: 0,
   };
 
   render() {
     const disabledA = this.state.counterA === null;
     const disabledB = this.state.counterB === null;
+    const disabledC = this.state.counterC === null;
 
     return (
       <div className="App">
@@ -75,6 +78,32 @@ class App extends React.Component<any, AppState> {
           }}
         >
           (B) Intercept return{disabledB && " (waiting)"}
+        </button>
+        <button
+          disabled={disabledC}
+          onClick={() => {
+            const counter = this.state.counterB;
+            this.setState(
+              {
+                counterC: null,
+              },
+              () => {
+                intercept(
+                  this.getIncrement,
+                  "both"
+                )({ from: "C", increment: 2 }).then(
+                  (increment: Incrementer) => {
+                    console.info("Button C triggered");
+                    this.setState({
+                      counterC: counter + increment.increment,
+                    });
+                  }
+                );
+              }
+            );
+          }}
+        >
+          (C) Intercept call and return{disabledB && " (waiting)"}
         </button>
       </div>
     );
