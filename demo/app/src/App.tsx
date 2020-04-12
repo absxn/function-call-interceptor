@@ -1,115 +1,118 @@
 import React from "react";
 import "./App.css";
-import InterceptorModal, { intercept } from "./InterceptorModal";
+import { intercept } from "./InterceptorModal";
 
-interface AppState {
-  counterA: number | null;
-  counterB: number | null;
-  counterC: number | null;
+interface Counter {
+  pending: boolean;
+  value: number;
 }
 
-interface Incrementer {
-  from: string;
-  increment: number;
+interface AppState {
+  counterA: Counter;
+  counterB: Counter;
+  counterC: Counter;
 }
 
 class App extends React.Component<any, AppState> {
   state = {
-    counterA: 0,
-    counterB: 0,
-    counterC: 0,
+    counterA: { pending: false, value: 0 },
+    counterB: { pending: false, value: 0 },
+    counterC: { pending: false, value: 0 },
   };
 
   render() {
-    const disabledA = this.state.counterA === null;
-    const disabledB = this.state.counterB === null;
-    const disabledC = this.state.counterC === null;
+    const disabledA = this.state.counterA.pending;
+    const disabledB = this.state.counterB.pending;
+    const disabledC = this.state.counterC.pending;
 
     return (
       <div className="App">
         <button
           disabled={disabledA}
           onClick={() => {
-            const counter = this.state.counterA;
             this.setState(
               {
-                counterA: null,
+                counterA: { ...this.state.counterA, pending: true },
               },
               () => {
                 intercept(
                   this.getIncrement,
                   "call"
-                )({ from: "A", increment: 1 }).then(
-                  (increment: Incrementer) => {
-                    console.info("Button A triggered");
-                    this.setState({
-                      counterA: counter + increment.increment,
-                    });
-                  }
-                );
+                )(1).then((increment) => {
+                  console.info("Button A triggered");
+                  this.setState({
+                    counterA: {
+                      pending: false,
+                      value: this.state.counterA.value + increment,
+                    },
+                  });
+                });
               }
             );
           }}
         >
           (A) Intercept call{disabledA && " (waiting)"}
         </button>
+        <div className="counter">{this.state.counterA.value}</div>
         <button
           disabled={disabledB}
           onClick={() => {
-            const counter = this.state.counterB;
             this.setState(
               {
-                counterB: null,
+                counterB: { ...this.state.counterB, pending: true },
               },
               () => {
                 intercept(
                   this.getIncrement,
                   "return"
-                )({ from: "B", increment: 2 }).then(
-                  (increment: Incrementer) => {
-                    console.info("Button B triggered");
-                    this.setState({
-                      counterB: counter + increment.increment,
-                    });
-                  }
-                );
+                )(2).then((increment) => {
+                  console.info("Button B triggered");
+                  this.setState({
+                    counterB: {
+                      pending: false,
+                      value: this.state.counterB.value + increment,
+                    },
+                  });
+                });
               }
             );
           }}
         >
           (B) Intercept return{disabledB && " (waiting)"}
         </button>
+        <div className="counter">{this.state.counterB.value}</div>
         <button
           disabled={disabledC}
           onClick={() => {
-            const counter = this.state.counterB;
             this.setState(
               {
-                counterC: null,
+                counterC: { ...this.state.counterC, pending: true },
               },
               () => {
                 intercept(
                   this.getIncrement,
                   "both"
-                )({ from: "C", increment: 2 }).then(
-                  (increment: Incrementer) => {
-                    console.info("Button C triggered");
-                    this.setState({
-                      counterC: counter + increment.increment,
-                    });
-                  }
-                );
+                )(3).then((increment) => {
+                  console.info("Button C triggered");
+                  this.setState({
+                    counterC: {
+                      pending: false,
+                      value: this.state.counterC.value + increment,
+                    },
+                  });
+                });
               }
             );
           }}
         >
           (C) Intercept call and return{disabledB && " (waiting)"}
         </button>
+        <div className="counter">{this.state.counterC.value}</div>
       </div>
     );
   }
 
-  getIncrement(increment: Incrementer): Promise<Incrementer> {
+  getIncrement(increment: number): Promise<number> {
     return new Promise((resolve) => {
       setTimeout(() => resolve(increment), 200);
     });
