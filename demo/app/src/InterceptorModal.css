@@ -15,6 +15,17 @@
   padding: 3px 5px;
 }
 
+.interceptorModal .editor {
+  display: block;
+  padding: 5px;
+  width: 100%;
+  margin: 10px 20px;
+  box-sizing: border-box;
+  background-color: lightyellow;
+  border: 1px solid #999;
+  font-family: monospace;
+}
+
 .interceptorModal.disabled {
   background-color: #eee;
 }

@@ -78,8 +78,24 @@ export default class InterceptorModal extends React.Component<
             </li>
           ))}
         </ol>
-        <h2>{interceptEvent.detail.trigger}</h2>
-        <pre>{JSON.stringify(interceptEvent)}</pre>
+        {interceptEvent.detail.trigger === "call" ? (
+          <>
+            <h2>Arguments</h2>
+            <pre>function(</pre>
+            <div className="editor" contentEditable>
+              {JSON.stringify(interceptEvent.detail.args)}
+            </div>
+            <pre>) => ?</pre>
+          </>
+        ) : (
+          <>
+            <h2>Return value</h2>
+            <pre>function({JSON.stringify(interceptEvent.detail.args)}) =></pre>
+            <div className="editor" contentEditable>
+              {JSON.stringify(interceptEvent.detail.rv)}
+            </div>
+          </>
+        )}
         <button
           onClick={() => {
             const response = new CustomEvent<InterceptEvent>(
