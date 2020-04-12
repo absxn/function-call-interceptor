@@ -33,8 +33,12 @@ class App extends React.Component<any, AppState> {
                 counterA: null,
               },
               () => {
-                intercept(this.getIncrement, "call")({ from: "A", increment: 1 }).then(
+                intercept(
+                  this.getIncrement,
+                  "call"
+                )({ from: "A", increment: 1 }).then(
                   (increment: Incrementer) => {
+                    console.info("Button A triggered");
                     this.setState({
                       counterA: counter + increment.increment,
                     });
@@ -55,8 +59,12 @@ class App extends React.Component<any, AppState> {
                 counterB: null,
               },
               () => {
-                intercept(this.getIncrement, "return")({ from: "B", increment: 2 }).then(
+                intercept(
+                  this.getIncrement,
+                  "return"
+                )({ from: "B", increment: 2 }).then(
                   (increment: Incrementer) => {
+                    console.info("Button B triggered");
                     this.setState({
                       counterB: counter + increment.increment,
                     });
@@ -66,7 +74,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (B) Intercept return{disabledA && " (waiting)"}
+          (B) Intercept return{disabledB && " (waiting)"}
         </button>
       </div>
     );

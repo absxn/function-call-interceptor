@@ -22,7 +22,7 @@ type EventQueue = Array<InterceptEvent>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onResponse: () => void;
+  onResponse: (eventToRemove: number, event: InterceptEvent) => void;
   queue: EventQueue;
 }
 
@@ -41,6 +41,7 @@ export default class InterceptorModal extends React.Component<
   render() {
     const activeEvent = this.state.activeEvent;
     const queue = this.props.queue;
+    const interceptEvent = queue[activeEvent];
 
     return (
       <fieldset
@@ -72,12 +73,24 @@ export default class InterceptorModal extends React.Component<
             </li>
           ))}
         </ol>
-        <h2>Call</h2>
-        <pre>{JSON.stringify(queue[activeEvent])}</pre>
-        <button onClick={this.props.onResponse}>Dispatch</button>
-        <h2>Return</h2>
-        <pre>Bar</pre>
-        <button onClick={this.props.onResponse}>Return</button>
+        <h2>{interceptEvent.trigger}</h2>
+        <pre>{JSON.stringify(interceptEvent)}</pre>
+        <button
+          onClick={() => {
+            const response = new Event("response") as InterceptEvent;
+            response.trigger = interceptEvent.trigger;
+            response.args = interceptEvent.args;
+            if (
+              response.trigger === "return" &&
+              interceptEvent.trigger === "return"
+            ) {
+              response.rv = interceptEvent.rv;
+            }
+            this.props.onResponse(activeEvent, response);
+          }}
+        >
+          Dispatch
+        </button>
       </fieldset>
     );
   }
@@ -95,6 +108,11 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
     // Call interceptor
     const interceptedArgs = await new Promise<A[]>((resolve) => {
       if (trigger === "call" || trigger === "both") {
+        console.info(
+          `Intercepted call function(${originalArgs
+            .map((a) => JSON.stringify(a))
+            .join(", ")}) => ?`
+        );
         const event = new Event("call") as CallEvent;
         event.args = originalArgs;
         event.trigger = "call";
@@ -115,18 +133,20 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
 
     // Return interceptor
     return new Promise<V>((resolve) => {
+      console.info(
+        `Calling function(${originalArgs
+          .map((a) => JSON.stringify(a))
+          .join(", ")}) => ?`
+      );
       const returnValue =
         interceptedArgs.length === 0 ? cb() : cb(...(interceptedArgs as A[]));
-
-      console.log(
-        `intercepted(${interceptedArgs.join(", ")}) => ${JSON.stringify(
-          returnValue
-        )}`
-      );
 
       if (trigger === "return" || trigger === "both") {
         const event = new Event("call") as ReturnEvent;
         event.trigger = "return";
+        console.info(
+          `Intercepted return value => ${JSON.stringify(returnValue)}`
+        );
         event.args = interceptedArgs;
         event.rv = returnValue;
         eventBus.dispatchEvent(event);
@@ -139,13 +159,21 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
 
         eventBus.addEventListener("response", responseListener);
       } else {
-        return returnValue;
+        resolve(returnValue);
       }
+    }).then((returnValue) => {
+      console.info(`Returning => ${JSON.stringify(returnValue)}`);
+
+      return returnValue;
     });
   };
 }
 
-function render(domId: string, queue: EventQueue, respond: () => void) {
+function render(
+  domId: string,
+  queue: EventQueue,
+  respond: (eventToRemove: number, event: InterceptEvent) => void
+) {
   return ReactDOM.render(
     <React.StrictMode>
       <InterceptorModal queue={queue} visible={true} onResponse={respond} />
@@ -157,20 +185,20 @@ function render(domId: string, queue: EventQueue, respond: () => void) {
 export function mountInterceptorClient(domId: string) {
   const queue: EventQueue = [];
 
-  function respond() {
-    queue.splice(0, 1);
+  function respond(eventToRemove: number, event: InterceptEvent) {
+    queue.splice(eventToRemove, 1);
+
+    eventBus.dispatchEvent(event);
+
+    const elementById = document.getElementById(domId);
+    if (elementById === null) {
+      throw new Error(`Can't find interceptor root element with #${domId}`);
+    } else {
+      ReactDOM.unmountComponentAtNode(elementById);
+    }
 
     if (queue.length > 0) {
       render(domId, queue, respond);
-    } else {
-      eventBus.dispatchEvent(new Event("response"));
-
-      const elementById = document.getElementById(domId);
-      if (elementById === null) {
-        throw new Error(`Can't find interceptor root element with #${domId}`);
-      } else {
-        ReactDOM.unmountComponentAtNode(elementById);
-      }
     }
   }
 
