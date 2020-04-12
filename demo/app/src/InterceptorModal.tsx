@@ -5,13 +5,13 @@ import ReactDOM from "react-dom";
 
 type Trigger = "call" | "return" | "both";
 
-interface CallEvent extends Event {
+interface CallEvent {
   trigger: "call";
   uuid: string;
   args?: any[];
 }
 
-interface ReturnEvent extends Event {
+interface ReturnEvent {
   trigger: "return";
   uuid: string;
   args?: any[];
@@ -20,11 +20,14 @@ interface ReturnEvent extends Event {
 
 type InterceptEvent = CallEvent | ReturnEvent;
 
-type EventQueue = Array<InterceptEvent>;
+type EventQueue = Array<CustomEvent<InterceptEvent>>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onResponse: (eventToRemove: number, event: InterceptEvent) => void;
+  onResponse: (
+    eventToRemove: number,
+    event: CustomEvent<InterceptEvent>
+  ) => void;
   queue: EventQueue;
 }
 
@@ -63,11 +66,11 @@ export default class InterceptorModal extends React.Component<
                   this.setState({ activeEvent: index });
                 }}
               >
-                {e.trigger === "call" ? (
-                  <code>call({JSON.stringify(e.args)}) => ?</code>
+                {e.detail.trigger === "call" ? (
+                  <code>call({JSON.stringify(e.detail.args)}) => ?</code>
                 ) : (
                   <code>
-                    return({JSON.stringify(e.args)}) =>{" "}
+                    return({JSON.stringify(e.detail.args)}) =>{" "}
                     {JSON.stringify(e.returnValue)}
                   </code>
                 )}
@@ -75,20 +78,14 @@ export default class InterceptorModal extends React.Component<
             </li>
           ))}
         </ol>
-        <h2>{interceptEvent.trigger}</h2>
+        <h2>{interceptEvent.detail.trigger}</h2>
         <pre>{JSON.stringify(interceptEvent)}</pre>
         <button
           onClick={() => {
-            const response = new Event("response") as InterceptEvent;
-            response.trigger = interceptEvent.trigger;
-            response.uuid = interceptEvent.uuid;
-            response.args = interceptEvent.args;
-            if (
-              response.trigger === "return" &&
-              interceptEvent.trigger === "return"
-            ) {
-              response.rv = interceptEvent.rv;
-            }
+            const response = new CustomEvent<InterceptEvent>(
+              "response",
+              interceptEvent
+            );
             this.props.onResponse(activeEvent, response);
           }}
         >
@@ -128,23 +125,25 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
             .map((a) => JSON.stringify(a))
             .join(", ")}) => ?`
         );
-        const event = new Event("call") as CallEvent;
-        event.uuid = uuid;
-        event.args = originalArgs;
-        event.trigger = "call";
+        const event = new CustomEvent<CallEvent>("call", {
+          detail: {
+            uuid,
+            args: originalArgs,
+            trigger: "call",
+          },
+        });
 
-        function responseListener(event: Event) {
-          const callEvent = event as CallEvent;
+        const responseListener =
+          ((callEvent: CustomEvent<CallEvent>) => {
+            // Handle only own events
+            if (callEvent.detail.uuid !== uuid) {
+              console.warn(`[${uuid}] Discarded call ${JSON.stringify(event)}`);
+              return;
+            }
 
-          // Handle only own events
-          if (callEvent.uuid !== uuid) {
-            console.warn(`[${uuid}] Discarded call ${JSON.stringify(event)}`);
-            return;
-          }
-
-          eventBus.removeEventListener("response", responseListener);
-          resolve(callEvent.args);
-        }
+            eventBus.removeEventListener("response", responseListener);
+            resolve(callEvent.detail.args);
+          }) as EventListener;
 
         eventBus.addEventListener("response", responseListener);
 
@@ -165,28 +164,34 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
         interceptedArgs.length === 0 ? cb() : cb(...(interceptedArgs as A[]));
 
       if (trigger === "return" || trigger === "both") {
-        const event = new Event("call") as ReturnEvent;
-        event.trigger = "return";
-        event.uuid = uuid;
+        const event = new CustomEvent<ReturnEvent>("call", {
+          detail: {
+            args: interceptedArgs,
+            rv: returnValue,
+            trigger: "return",
+            uuid,
+          },
+        });
         console.info(
           `[${uuid}] Intercepted return value => ${JSON.stringify(returnValue)}`
         );
-        event.args = interceptedArgs;
-        event.rv = returnValue;
         eventBus.dispatchEvent(event);
 
-        function responseListener(event: Event) {
-          const returnEvent = event as ReturnEvent;
+        const responseListener =
+          ((event: CustomEvent<ReturnEvent>) => {
+            const returnEvent = event;
 
-          // Handle only own events
-          if (returnEvent.uuid !== uuid) {
-            console.warn(`[${uuid}] Discarded return ${JSON.stringify(event)}`);
-            return;
-          }
+            // Handle only own events
+            if (returnEvent.detail.uuid !== uuid) {
+              console.warn(
+                `[${uuid}] Discarded return ${JSON.stringify(event)}`
+              );
+              return;
+            }
 
-          eventBus.removeEventListener("response", responseListener);
-          resolve(returnEvent.rv);
-        }
+            eventBus.removeEventListener("response", responseListener);
+            resolve(returnEvent.detail.rv);
+          }) as EventListener;
 
         eventBus.addEventListener("response", responseListener);
       } else {
@@ -203,7 +208,7 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: InterceptEvent) => void
+  respond: (eventToRemove: number, event: CustomEvent<InterceptEvent>) => void
 ) {
   return ReactDOM.render(
     <React.StrictMode>
@@ -216,7 +221,7 @@ function render(
 export function mountInterceptorClient(domId: string) {
   const queue: EventQueue = [];
 
-  function respond(eventToRemove: number, event: InterceptEvent) {
+  function respond(eventToRemove: number, event: CustomEvent<InterceptEvent>) {
     queue.splice(eventToRemove, 1);
 
     console.info(`Dispatched ${JSON.stringify(event)}`);
@@ -234,12 +239,10 @@ export function mountInterceptorClient(domId: string) {
     }
   }
 
-  eventBus.addEventListener("call", function requestListener(event) {
-    // TODO: Ensure type
-    const callEvent = event as CallEvent;
-
-    queue.push(callEvent);
-
+  eventBus.addEventListener("call", function requestListener(
+    event: CustomEvent<CallEvent>
+  ) {
+    queue.push(event);
     render(domId, queue, respond);
-  });
+  } as EventListener);
 }
