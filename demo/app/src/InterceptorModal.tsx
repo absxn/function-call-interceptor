@@ -71,7 +71,7 @@ export default class InterceptorModal extends React.Component<
                 ) : (
                   <code>
                     return({JSON.stringify(e.detail.args)}) =>{" "}
-                    {JSON.stringify(e.returnValue)}
+                    {JSON.stringify(e.detail.rv)}
                   </code>
                 )}
               </span>
