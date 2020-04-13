@@ -33,12 +33,21 @@ interface InterceptorModalProps {
 
 interface InterceptorModalState {
   activeEvent: number | -1;
-  editedData: Pick<ReturnEvent, "rv"> | Pick<CallEvent, "args">;
+  editedData: string;
 }
 
-function loadData(queue: CustomEvent<InterceptEvent>[], index: number) {
+function loadData(queue: CustomEvent<InterceptEvent>[], index: number): string {
   const detail = queue[index].detail;
-  return detail.trigger === "call" ? detail.args : detail.rv;
+  return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
+}
+
+function isValidJsonString(jsonString: string) {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export default class InterceptorModal extends React.Component<
@@ -54,6 +63,7 @@ export default class InterceptorModal extends React.Component<
     const activeEvent = this.state.activeEvent;
     const queue = this.props.queue;
     const interceptEvent = queue[this.state.activeEvent];
+    const validInput = isValidJsonString(this.state.editedData);
     return (
       <fieldset
         className={cx("interceptorModal", { disabled: !this.props.visible })}
@@ -92,9 +102,9 @@ export default class InterceptorModal extends React.Component<
             <h2>Arguments</h2>
             <pre>function(</pre>
             <textarea
-              className="editor"
-              onChange={this.updateArgs.bind(this)}
-              value={JSON.stringify(this.state.editedData)}
+              className={cx("editor", { invalidJson: !validInput })}
+              onChange={this.updateValue.bind(this)}
+              value={this.state.editedData}
             />
             <pre>) => ?</pre>
           </>
@@ -103,13 +113,14 @@ export default class InterceptorModal extends React.Component<
             <h2>Return value</h2>
             <pre>function({JSON.stringify(interceptEvent.detail.args)}) =></pre>
             <textarea
-              className="editor"
-              onChange={this.updateReturnValue.bind(this)}
-              value={JSON.stringify(this.state.editedData)}
+              className={cx("editor", { invalidJson: !validInput })}
+              onChange={this.updateValue.bind(this)}
+              value={this.state.editedData}
             />
           </>
         )}
         <button
+          disabled={!validInput}
           onClick={() => {
             const editedData = this.state.editedData;
             if (editedData === null || editedData === undefined) {
@@ -121,37 +132,27 @@ export default class InterceptorModal extends React.Component<
                 ? new CustomEvent<CallEvent>("response", {
                     detail: {
                       ...interceptEvent.detail,
-                      args: editedData,
+                      args: JSON.parse(editedData),
                     },
                   })
                 : new CustomEvent<ReturnEvent>("response", {
                     detail: {
                       ...interceptEvent.detail,
-                      rv: editedData,
+                      rv: JSON.parse(editedData),
                     },
                   });
 
             this.props.onResponse(activeEvent, response);
           }}
         >
-          Dispatch
+          Dispatch{!validInput && " (malformed JSON input)"}
         </button>
       </fieldset>
     );
   }
 
-  updateArgs(event: ChangeEvent<HTMLTextAreaElement>) {
-    if (this.props.queue[this.state.activeEvent].detail.trigger !== "call") {
-      throw new Error("Not a call event");
-    }
-    this.setState({ editedData: JSON.parse(event.currentTarget.value) });
-  }
-
-  updateReturnValue(event: ChangeEvent<HTMLTextAreaElement>) {
-    if (this.props.queue[this.state.activeEvent].detail.trigger !== "return") {
-      throw new Error("Not a return event");
-    }
-    this.setState({ editedData: JSON.parse(event.currentTarget.value) });
+  updateValue(event: ChangeEvent<HTMLTextAreaElement>) {
+    this.setState({ editedData: event.currentTarget.value });
   }
 }
 

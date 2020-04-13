@@ -26,6 +26,10 @@
   font-family: monospace;
 }
 
+.interceptorModal .editor.invalidJson {
+  background-color: lightcoral;
+}
+
 .interceptorModal.disabled {
   background-color: #eee;
 }
