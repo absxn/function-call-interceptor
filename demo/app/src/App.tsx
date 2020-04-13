@@ -38,8 +38,7 @@ class App extends React.Component<any, AppState> {
                 counterN: { ...this.state.counterN, pending: true },
               },
               () => {
-                this.getIncrement(1).then((increment) => {
-                  console.info("Button A triggered");
+                this.square(1).then((increment) => {
                   this.setState({
                     counterN: {
                       pending: false,
@@ -51,7 +50,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          Normal button{disabledN && " (waiting)"}
+          square(1) => 1{disabledN && " (waiting)"}
         </button>
         <div className="counter">{this.state.counterN.value}</div>
         <button
@@ -63,10 +62,9 @@ class App extends React.Component<any, AppState> {
               },
               () => {
                 intercept(
-                  this.getIncrement,
+                  this.square,
                   "call"
                 )(1).then((increment) => {
-                  console.info("Button A triggered");
                   this.setState({
                     counterA: {
                       pending: false,
@@ -78,7 +76,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (A) Intercept call{disabledA && " (waiting)"}
+          square(INTERCEPT(1)) => 1{disabledA && " (waiting)"}
         </button>
         <div className="counter">{this.state.counterA.value}</div>
         <button
@@ -90,10 +88,9 @@ class App extends React.Component<any, AppState> {
               },
               () => {
                 intercept(
-                  this.getIncrement,
+                  this.square,
                   "return"
                 )(2).then((increment) => {
-                  console.info("Button B triggered");
                   this.setState({
                     counterB: {
                       pending: false,
@@ -105,7 +102,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (B) Intercept return{disabledB && " (waiting)"}
+          square(2) => INTERCEPT(4){disabledB && " (waiting)"}
         </button>
         <div className="counter">{this.state.counterB.value}</div>
         <button
@@ -117,10 +114,9 @@ class App extends React.Component<any, AppState> {
               },
               () => {
                 intercept(
-                  this.getIncrement,
+                  this.square,
                   "both"
                 )(3).then((increment) => {
-                  console.info("Button C triggered");
                   this.setState({
                     counterC: {
                       pending: false,
@@ -132,17 +128,17 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (C) Intercept call and return{disabledC && " (waiting)"}
+          square(INTERCEPT(3)) => INTERCEPT(9){disabledC && " (waiting)"}
         </button>
         <div className="counter">{this.state.counterC.value}</div>
       </div>
     );
   }
 
-  getIncrement(increment: number): Promise<number> {
-    console.info(`App: getIncrement(${increment})`);
+  square(value: number): Promise<number> {
+    console.info(`App: getIncrement(${value})`);
     return new Promise((resolve) => {
-      setTimeout(() => resolve(increment), 500);
+      setTimeout(() => resolve(value * value), 500);
     });
   }
 }
