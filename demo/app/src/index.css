@@ -18,10 +18,10 @@ code {
 }
 
 #wrapper #root {
-  flex: 1;
+  flex: 2;
   background-color: #eee;
 }
 
 #wrapper #interceptor {
-  flex: 2;
+  flex: 3;
 }

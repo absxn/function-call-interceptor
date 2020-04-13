@@ -30,6 +30,7 @@ class App extends React.Component<any, AppState> {
 
     return (
       <div className="App">
+        <div className="counter">{this.state.counterN.value}</div>
         <button
           disabled={disabledN}
           onClick={() => {
@@ -50,9 +51,9 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          square(1) => 1{disabledN && " (waiting)"}
+          += await square(1) => 1{disabledN && " (waiting)"}
         </button>
-        <div className="counter">{this.state.counterN.value}</div>
+        <div className="counter">{this.state.counterA.value}</div>
         <button
           disabled={disabledA}
           onClick={() => {
@@ -76,9 +77,9 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          square(INTERCEPT(1)) => 1{disabledA && " (waiting)"}
+          += await square(INTERCEPT(1)) => 1{disabledA && " (waiting)"}
         </button>
-        <div className="counter">{this.state.counterA.value}</div>
+        <div className="counter">{this.state.counterB.value}</div>
         <button
           disabled={disabledB}
           onClick={() => {
@@ -102,9 +103,9 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          square(2) => INTERCEPT(4){disabledB && " (waiting)"}
+          += await square(2) => INTERCEPT(4){disabledB && " (waiting)"}
         </button>
-        <div className="counter">{this.state.counterB.value}</div>
+        <div className="counter">{this.state.counterC.value}</div>
         <button
           disabled={disabledC}
           onClick={() => {
@@ -128,9 +129,8 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          square(INTERCEPT(3)) => INTERCEPT(9){disabledC && " (waiting)"}
+          += await square(INTERCEPT(3)) => INTERCEPT(9){disabledC && " (waiting)"}
         </button>
-        <div className="counter">{this.state.counterC.value}</div>
       </div>
     );
   }
