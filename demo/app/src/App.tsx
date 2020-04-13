@@ -113,6 +113,7 @@ class App extends React.Component<any, AppState> {
   }
 
   getIncrement(increment: number): Promise<number> {
+    console.info(`App: getIncrement(${increment})`);
     return new Promise((resolve) => {
       setTimeout(() => resolve(increment), 200);
     });

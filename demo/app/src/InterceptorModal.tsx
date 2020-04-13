@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 import cx from "classnames";
 import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
@@ -33,6 +33,12 @@ interface InterceptorModalProps {
 
 interface InterceptorModalState {
   activeEvent: number | -1;
+  editedData: Pick<ReturnEvent, "rv"> | Pick<CallEvent, "args">;
+}
+
+function loadData(queue: CustomEvent<InterceptEvent>[], index: number) {
+  const detail = queue[index].detail;
+  return detail.trigger === "call" ? detail.args : detail.rv;
 }
 
 export default class InterceptorModal extends React.Component<
@@ -41,13 +47,13 @@ export default class InterceptorModal extends React.Component<
 > {
   state = {
     activeEvent: 0,
+    editedData: loadData(this.props.queue, 0),
   };
 
   render() {
     const activeEvent = this.state.activeEvent;
     const queue = this.props.queue;
-    const interceptEvent = queue[activeEvent];
-
+    const interceptEvent = queue[this.state.activeEvent];
     return (
       <fieldset
         className={cx("interceptorModal", { disabled: !this.props.visible })}
@@ -63,7 +69,10 @@ export default class InterceptorModal extends React.Component<
             >
               <span
                 onClick={() => {
-                  this.setState({ activeEvent: index });
+                  this.setState({
+                    activeEvent: index,
+                    editedData: loadData(this.props.queue, index),
+                  });
                 }}
               >
                 {e.detail.trigger === "call" ? (
@@ -82,26 +91,46 @@ export default class InterceptorModal extends React.Component<
           <>
             <h2>Arguments</h2>
             <pre>function(</pre>
-            <div className="editor" contentEditable>
-              {JSON.stringify(interceptEvent.detail.args)}
-            </div>
+            <textarea
+              className="editor"
+              onChange={this.updateArgs.bind(this)}
+              value={JSON.stringify(this.state.editedData)}
+            />
             <pre>) => ?</pre>
           </>
         ) : (
           <>
             <h2>Return value</h2>
             <pre>function({JSON.stringify(interceptEvent.detail.args)}) =></pre>
-            <div className="editor" contentEditable>
-              {JSON.stringify(interceptEvent.detail.rv)}
-            </div>
+            <textarea
+              className="editor"
+              onChange={this.updateReturnValue.bind(this)}
+              value={JSON.stringify(this.state.editedData)}
+            />
           </>
         )}
         <button
           onClick={() => {
-            const response = new CustomEvent<InterceptEvent>(
-              "response",
-              interceptEvent
-            );
+            const editedData = this.state.editedData;
+            if (editedData === null || editedData === undefined) {
+              throw new Error("Can't submit broken data");
+            }
+
+            const response =
+              interceptEvent.detail.trigger === "call"
+                ? new CustomEvent<CallEvent>("response", {
+                    detail: {
+                      ...interceptEvent.detail,
+                      args: editedData,
+                    },
+                  })
+                : new CustomEvent<ReturnEvent>("response", {
+                    detail: {
+                      ...interceptEvent.detail,
+                      rv: editedData,
+                    },
+                  });
+
             this.props.onResponse(activeEvent, response);
           }}
         >
@@ -109,6 +138,20 @@ export default class InterceptorModal extends React.Component<
         </button>
       </fieldset>
     );
+  }
+
+  updateArgs(event: ChangeEvent<HTMLTextAreaElement>) {
+    if (this.props.queue[this.state.activeEvent].detail.trigger !== "call") {
+      throw new Error("Not a call event");
+    }
+    this.setState({ editedData: JSON.parse(event.currentTarget.value) });
+  }
+
+  updateReturnValue(event: ChangeEvent<HTMLTextAreaElement>) {
+    if (this.props.queue[this.state.activeEvent].detail.trigger !== "return") {
+      throw new Error("Not a return event");
+    }
+    this.setState({ editedData: JSON.parse(event.currentTarget.value) });
   }
 }
 
