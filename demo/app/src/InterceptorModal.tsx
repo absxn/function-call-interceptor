@@ -213,14 +213,15 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
     });
 
     // Return interceptor
-    return new Promise<V>((resolve) => {
+    return new Promise<V>(async (resolve) => {
       console.info(
         `[${uuid}] Calling function(${originalArgs
           .map((a) => JSON.stringify(a))
           .join(", ")}) => ?`
       );
-      const returnValue =
-        interceptedArgs.length === 0 ? cb() : cb(...(interceptedArgs as A[]));
+      const returnValue = await (interceptedArgs.length === 0
+        ? cb()
+        : cb(...(interceptedArgs as A[])));
 
       if (trigger === "return" || trigger === "both") {
         const event = new CustomEvent<ReturnEvent>("call", {
