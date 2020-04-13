@@ -8,6 +8,7 @@ interface Counter {
 }
 
 interface AppState {
+  counterN: Counter;
   counterA: Counter;
   counterB: Counter;
   counterC: Counter;
@@ -15,18 +16,44 @@ interface AppState {
 
 class App extends React.Component<any, AppState> {
   state = {
+    counterN: { pending: false, value: 0 },
     counterA: { pending: false, value: 0 },
     counterB: { pending: false, value: 0 },
     counterC: { pending: false, value: 0 },
   };
 
   render() {
+    const disabledN = this.state.counterN.pending;
     const disabledA = this.state.counterA.pending;
     const disabledB = this.state.counterB.pending;
     const disabledC = this.state.counterC.pending;
 
     return (
       <div className="App">
+        <button
+          disabled={disabledN}
+          onClick={() => {
+            this.setState(
+              {
+                counterN: { ...this.state.counterN, pending: true },
+              },
+              () => {
+                this.getIncrement(1).then((increment) => {
+                  console.info("Button A triggered");
+                  this.setState({
+                    counterN: {
+                      pending: false,
+                      value: this.state.counterN.value + increment,
+                    },
+                  });
+                });
+              }
+            );
+          }}
+        >
+          Normal button{disabledN && " (waiting)"}
+        </button>
+        <div className="counter">{this.state.counterN.value}</div>
         <button
           disabled={disabledA}
           onClick={() => {
@@ -105,7 +132,7 @@ class App extends React.Component<any, AppState> {
             );
           }}
         >
-          (C) Intercept call and return{disabledB && " (waiting)"}
+          (C) Intercept call and return{disabledC && " (waiting)"}
         </button>
         <div className="counter">{this.state.counterC.value}</div>
       </div>
@@ -115,7 +142,7 @@ class App extends React.Component<any, AppState> {
   getIncrement(increment: number): Promise<number> {
     console.info(`App: getIncrement(${increment})`);
     return new Promise((resolve) => {
-      setTimeout(() => resolve(increment), 200);
+      setTimeout(() => resolve(increment), 500);
     });
   }
 }
