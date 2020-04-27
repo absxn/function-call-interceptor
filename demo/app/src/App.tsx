@@ -172,7 +172,9 @@ class App extends React.Component<any, AppState> {
               );
             }}
           >
-            += await concat("x", "y") => "xy"{disabledStringA && " (waiting)"}
+            = await concat("{this.state.stringA.value}", "x", "y") => "
+            {this.state.stringA.value}xy"
+            {disabledStringA && " (waiting)"}
           </button>
           <div className="counter">{this.state.stringB.value}</div>
           <button
@@ -199,8 +201,8 @@ class App extends React.Component<any, AppState> {
               );
             }}
           >
-            += await concat(INTERCEPT("x", "y")) => "x"
-            {disabledStringB && " (waiting)"}
+            = await concat(INTERCEPT("{this.state.stringB.value}", "x", "y")) =>
+            "{this.state.stringB.value}xy"{disabledStringB && " (waiting)"}
           </button>
         </div>
       </div>
