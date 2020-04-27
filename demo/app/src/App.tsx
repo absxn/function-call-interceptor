@@ -17,6 +17,7 @@ interface AppState {
   counterA: Counter;
   counterB: Counter;
   counterC: Counter;
+  counterD: Counter;
   stringA: ConcatenatedString;
   stringB: ConcatenatedString;
 }
@@ -27,6 +28,7 @@ class App extends React.Component<any, AppState> {
     counterA: { pending: false, value: 0 },
     counterB: { pending: false, value: 0 },
     counterC: { pending: false, value: 0 },
+    counterD: { pending: false, value: 0 },
     stringA: { pending: false, value: "" },
     stringB: { pending: false, value: "" },
   };
@@ -36,6 +38,7 @@ class App extends React.Component<any, AppState> {
     const disabledA = this.state.counterA.pending;
     const disabledB = this.state.counterB.pending;
     const disabledC = this.state.counterC.pending;
+    const disabledD = this.state.counterD.pending;
     const disabledStringA = this.state.stringA.pending;
     const disabledStringB = this.state.stringB.pending;
 
@@ -145,6 +148,33 @@ class App extends React.Component<any, AppState> {
           >
             += await square(INTERCEPT(3)) => INTERCEPT(9)
             {disabledC && " (waiting)"}
+          </button>
+          <div className="counter">{this.state.counterD.value}</div>
+          <button
+            disabled={disabledD}
+            onClick={() => {
+              this.setState(
+                {
+                  counterD: { ...this.state.counterD, pending: true },
+                },
+                () => {
+                  intercept(
+                    this.square,
+                    "bypass"
+                  )(4).then((increment) => {
+                    this.setState({
+                      counterD: {
+                        pending: false,
+                        value: this.state.counterD.value + increment,
+                      },
+                    });
+                  });
+                }
+              );
+            }}
+          >
+            += await INTERCEPT(square(4)) => ???
+            {disabledD && " (waiting)"}
           </button>
         </div>
         <h2>Multiple arguments</h2>

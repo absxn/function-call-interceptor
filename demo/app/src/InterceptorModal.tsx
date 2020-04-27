@@ -3,7 +3,15 @@ import cx from "classnames";
 import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
 
-type Trigger = "call" | "return" | "both";
+type Trigger = "bypass" | "call" | "return" | "both";
+
+// Bypass never calls the original code
+interface BypassEvent {
+  trigger: "bypass";
+  uuid: string;
+  args?: any[];
+  rv?: any;
+}
 
 interface CallEvent {
   trigger: "call";
@@ -18,7 +26,7 @@ interface ReturnEvent {
   rv?: any;
 }
 
-type InterceptEvent = CallEvent | ReturnEvent;
+type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
 
 type EventQueue = Array<CustomEvent<InterceptEvent>>;
 
@@ -135,7 +143,7 @@ export default class InterceptorModal extends React.Component<
                       args: JSON.parse(editedData),
                     },
                   })
-                : new CustomEvent<ReturnEvent>("response", {
+                : new CustomEvent<ReturnEvent | BypassEvent>("response", {
                     detail: {
                       ...interceptEvent.detail,
                       rv: JSON.parse(editedData),
@@ -215,16 +223,21 @@ export function intercept<A extends any, R extends Promise<V>, V extends any>(
 
     // Return interceptor
     return new Promise<V>(async (resolve) => {
-      console.info(
-        `[${uuid}] Calling function(${originalArgs
-          .map((a) => JSON.stringify(a))
-          .join(", ")}) => ?`
-      );
-      const returnValue = await (interceptedArgs.length === 0
-        ? cb()
-        : cb(...(interceptedArgs as A[])));
+      // Bypass never calls the original code
+      const returnValue = await (trigger === "bypass"
+        ? Promise.resolve<any>("???") // <V> may be anything
+        : (() => {
+            console.info(
+              `[${uuid}] Calling function(${originalArgs
+                .map((a) => JSON.stringify(a))
+                .join(", ")}) => ?`
+            );
+            return interceptedArgs.length === 0
+              ? cb()
+              : cb(...(interceptedArgs as A[]));
+          })());
 
-      if (trigger === "return" || trigger === "both") {
+      if (trigger === "return" || trigger === "both" || trigger === "bypass") {
         const event = new CustomEvent<ReturnEvent>("call", {
           detail: {
             args: interceptedArgs,
