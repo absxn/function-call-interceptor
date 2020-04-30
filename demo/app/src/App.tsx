@@ -57,6 +57,37 @@ class Button<T> extends React.Component<ButtonProps<T>, ButtonState> {
   }
 }
 
+interface DemoProps<T> {
+  onClick: (value: T) => Promise<T>;
+  value: T;
+}
+
+interface DemoState<T> {
+  value: T;
+}
+
+class Demo<T> extends React.Component<DemoProps<T>, DemoState<T>> {
+  state = {
+    value: this.props.value,
+  };
+
+  render() {
+    return (
+      <>
+        <div className="counter">{this.state.value}</div>
+        <Button
+          onClick={() => this.props.onClick(this.state.value)}
+          onChange={(value) => {
+            this.setState({ value });
+          }}
+        >
+          {this.props.children}
+        </Button>
+      </>
+    );
+  }
+}
+
 class App extends React.Component<any, AppState> {
   state = {
     counterN: 0,
@@ -74,76 +105,53 @@ class App extends React.Component<any, AppState> {
         <h1>Interceptor</h1>
         <h2>Single argument demo</h2>
         <div className="demo">
-          <div className="counter">{this.state.counterN}</div>
-          <Button
-            onClick={() => this.square(1)}
-            onChange={(value) => {
-              this.setState({ counterN: this.state.counterN + value });
-            }}
-          >
+          <Demo value={0} onClick={() => this.square(1)}>
             += await square(1) => 1
-          </Button>
-          <div className="counter">{this.state.counterA}</div>
-          <Button
-            onClick={() => intercept(this.square, "call")(1)}
-            onChange={(value) => {
-              this.setState({ counterA: this.state.counterA + value });
-            }}
+          </Demo>
+          <Demo
+            value={0}
+            onClick={async (value) =>
+              value + (await intercept(this.square, "call")(1))
+            }
           >
             += await square(INTERCEPT(1)) => 1
-          </Button>
-          <div className="counter">{this.state.counterB}</div>
-          <Button
-            onClick={() => intercept(this.square, "return")(2)}
-            onChange={(value) => {
-              this.setState({ counterB: this.state.counterB + value });
-            }}
+          </Demo>
+          <Demo
+            value={0}
+            onClick={async (value) =>
+              value + (await intercept(this.square, "return")(2))
+            }
           >
             += await square(2) => INTERCEPT(4)
-          </Button>
-          <div className="counter">{this.state.counterC}</div>
-          <Button
-            onClick={() => intercept(this.square, "both")(3)}
-            onChange={(value) => {
-              this.setState({ counterC: this.state.counterC + value });
-            }}
+          </Demo>
+          <Demo
+            value={0}
+            onClick={async (value) =>
+              value + (await intercept(this.square, "both")(3))
+            }
           >
             += await square(INTERCEPT(3)) => INTERCEPT(9)
-          </Button>
-          <div className="counter">{this.state.counterD}</div>
-          <Button
-            onClick={() => intercept(this.square, "bypass")(4)}
-            onChange={(value) => {
-              this.setState({ counterD: this.state.counterD + value });
-            }}
+          </Demo>
+          <Demo
+            value={0}
+            onClick={async (value) =>
+              value + (await intercept(this.square, "bypass")(4))
+            }
           >
             += await INTERCEPT(square(4)) => ???
-          </Button>
+          </Demo>
         </div>
         <h2>Multiple arguments</h2>
         <div className="demo">
-          <div className="counter">{this.state.stringA}</div>
-          <Button
-            onClick={() => this.concat(this.state.stringA, "x", "y")}
-            onChange={(value) => {
-              this.setState({ stringA: value });
-            }}
+          <Demo value={""} onClick={(value) => this.concat(value, "x", "y")}>
+            = await concat("{this.state.stringA}", "x", "y") => "xy"
+          </Demo>
+          <Demo
+            value={""}
+            onClick={(value) => intercept(this.concat, "call")(value, "x", "y")}
           >
-            = await concat("{this.state.stringA}", "x", "y") => "
-            {this.state.stringA}xy"
-          </Button>
-          <div className="counter">{this.state.stringB}</div>
-          <Button
-            onClick={() =>
-              intercept(this.concat, "call")(this.state.stringB, "x", "y")
-            }
-            onChange={(value) => {
-              this.setState({ stringB: value });
-            }}
-          >
-            = aw= await concat(INTERCEPT("{this.state.stringB}", "x", "y")) => "
-            {this.state.stringB}xy"
-          </Button>
+            = await concat(INTERCEPT("{this.state.stringB}", "x", "y")) => "xy"
+          </Demo>
         </div>
       </div>
     );
