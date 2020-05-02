@@ -105,7 +105,10 @@ class App extends React.Component<any, AppState> {
         <h1>Interceptor</h1>
         <h2>Single argument demo</h2>
         <div className="demo">
-          <Demo value={0} onClick={() => this.square(1)}>
+          <Demo
+            value={0}
+            onClick={async (value) => value + (await this.square(1))}
+          >
             += await square(1) => 1
           </Demo>
           <Demo
