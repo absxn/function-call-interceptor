@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import { intercept } from "./InterceptorModal";
+import classNames from "classnames";
 
 interface AppState {}
 
@@ -49,32 +50,59 @@ class Button<T> extends React.Component<ButtonProps<T>, ButtonState> {
   }
 }
 
-interface DemoProps<T> {
-  onClick: (value: T) => Promise<T>;
+interface DemoProps<T, A extends any> {
+  onClick: (callback: (...value: A[]) => Promise<T>, value: T) => Promise<T>;
+  callback: (...value: A[]) => Promise<T>;
   value: T;
 }
 
 interface DemoState<T> {
   value: T;
+  calling: boolean;
 }
 
-class Demo<T> extends React.Component<DemoProps<T>, DemoState<T>> {
+class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
   state = {
     value: this.props.value,
+    calling: false,
   };
 
   render() {
+    const cb = (...args: A[]) => {
+      return new Promise<T>((resolve) => {
+        this.setState(
+          {
+            calling: true,
+          },
+          async () => {
+            const value = await this.props.callback(...args);
+            this.setState(
+              {
+                calling: false,
+              },
+              () => {
+                resolve(value);
+              }
+            );
+          }
+        );
+      });
+    };
+
     return (
       <>
         <div className="counter">{this.state.value}</div>
         <Button
-          onClick={() => this.props.onClick(this.state.value)}
+          onClick={() => this.props.onClick(cb, this.state.value)}
           onChange={(value) => {
             this.setState({ value });
           }}
         >
           {this.props.children}
         </Button>
+        <div className={classNames("status", { active: this.state.calling })}>
+          {this.state.calling ? "Call" : "Idle"}
+        </div>
       </>
     );
   }
@@ -89,38 +117,43 @@ class App extends React.Component<any, AppState> {
         <div className="demo">
           <Demo
             value={0}
-            onClick={async (value) => value + (await this.square(1))}
+            callback={this.square}
+            onClick={async (cb, value) => value + (await cb(1))}
           >
             += await square(1) => 1
           </Demo>
           <Demo
             value={0}
-            onClick={async (value) =>
-              value + (await intercept(this.square, "call")(1))
+            callback={this.square}
+            onClick={async (cb, value) =>
+              value + (await intercept(cb, "call")(1))
             }
           >
             += await square(INTERCEPT(1)) => 1
           </Demo>
           <Demo
             value={0}
-            onClick={async (value) =>
-              value + (await intercept(this.square, "return")(2))
+            callback={this.square}
+            onClick={async (cb, value) =>
+              value + (await intercept(cb, "return")(2))
             }
           >
             += await square(2) => INTERCEPT(4)
           </Demo>
           <Demo
             value={0}
-            onClick={async (value) =>
-              value + (await intercept(this.square, "both")(3))
+            callback={this.square}
+            onClick={async (cb, value) =>
+              value + (await intercept(cb, "both")(3))
             }
           >
             += await square(INTERCEPT(3)) => INTERCEPT(9)
           </Demo>
           <Demo
             value={0}
-            onClick={async (value) =>
-              value + (await intercept(this.square, "bypass")(4))
+            callback={this.square}
+            onClick={async (cb, value) =>
+              value + (await intercept(cb, "bypass")(4))
             }
           >
             += await INTERCEPT(square(4)) => ???
@@ -128,12 +161,17 @@ class App extends React.Component<any, AppState> {
         </div>
         <h2>Multiple arguments</h2>
         <div className="demo">
-          <Demo value={""} onClick={(value) => this.concat(value, "x", "y")}>
+          <Demo
+            callback={this.concat}
+            value={""}
+            onClick={(cb, value) => cb(value, "x", "y")}
+          >
             = await concat("", "x", "y") => "xy"
           </Demo>
           <Demo
+            callback={this.concat}
             value={""}
-            onClick={(value) => intercept(this.concat, "call")(value, "x", "y")}
+            onClick={(cb, value) => intercept(cb, "call")(value, "x", "y")}
           >
             = await concat(INTERCEPT("", "x", "y")) => "xy"
           </Demo>
