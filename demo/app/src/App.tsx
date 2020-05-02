@@ -2,15 +2,7 @@ import React from "react";
 import "./App.css";
 import { intercept } from "./InterceptorModal";
 
-interface AppState {
-  counterN: number;
-  counterA: number;
-  counterB: number;
-  counterC: number;
-  counterD: number;
-  stringA: string;
-  stringB: string;
-}
+interface AppState {}
 
 interface ButtonState {
   disabled: boolean;
@@ -89,16 +81,6 @@ class Demo<T> extends React.Component<DemoProps<T>, DemoState<T>> {
 }
 
 class App extends React.Component<any, AppState> {
-  state = {
-    counterN: 0,
-    counterA: 0,
-    counterB: 0,
-    counterC: 0,
-    counterD: 0,
-    stringA: "",
-    stringB: "",
-  };
-
   render() {
     return (
       <div className="App">
@@ -147,13 +129,13 @@ class App extends React.Component<any, AppState> {
         <h2>Multiple arguments</h2>
         <div className="demo">
           <Demo value={""} onClick={(value) => this.concat(value, "x", "y")}>
-            = await concat("{this.state.stringA}", "x", "y") => "xy"
+            = await concat("", "x", "y") => "xy"
           </Demo>
           <Demo
             value={""}
             onClick={(value) => intercept(this.concat, "call")(value, "x", "y")}
           >
-            = await concat(INTERCEPT("{this.state.stringB}", "x", "y")) => "xy"
+            = await concat(INTERCEPT("", "x", "y")) => "xy"
           </Demo>
         </div>
       </div>
