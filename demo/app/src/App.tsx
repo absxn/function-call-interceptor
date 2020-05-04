@@ -59,12 +59,14 @@ interface DemoProps<T, A extends any> {
 interface DemoState<T> {
   value: T;
   calling: boolean;
+  callCount: number;
 }
 
 class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
   state = {
     value: this.props.value,
     calling: false,
+    callCount: 0,
   };
 
   render() {
@@ -79,6 +81,7 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
             this.setState(
               {
                 calling: false,
+                callCount: this.state.callCount + 1,
               },
               () => {
                 resolve(value);
@@ -101,7 +104,9 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
           {this.props.children}
         </Button>
         <div className={classNames("status", { active: this.state.calling })}>
-          {this.state.calling ? "Call" : "Idle"}
+          {this.state.calling
+            ? "Running"
+            : `Called ${this.state.callCount} times`}
         </div>
       </>
     );
@@ -120,7 +125,7 @@ class App extends React.Component<any, AppState> {
             callback={this.square}
             onClick={async (cb, value) => value + (await cb(1))}
           >
-            += await square(1) => 1
+            square(1) => 1
           </Demo>
           <Demo
             value={0}
@@ -129,7 +134,7 @@ class App extends React.Component<any, AppState> {
               value + (await intercept(cb, "call")(1))
             }
           >
-            += await square(INTERCEPT(1)) => 1
+            square(INTERCEPT(1)) => 1
           </Demo>
           <Demo
             value={0}
@@ -138,7 +143,7 @@ class App extends React.Component<any, AppState> {
               value + (await intercept(cb, "return")(2))
             }
           >
-            += await square(2) => INTERCEPT(4)
+            square(2) => INTERCEPT(4)
           </Demo>
           <Demo
             value={0}
@@ -147,7 +152,7 @@ class App extends React.Component<any, AppState> {
               value + (await intercept(cb, "both")(3))
             }
           >
-            += await square(INTERCEPT(3)) => INTERCEPT(9)
+            square(INTERCEPT(3)) => INTERCEPT(9)
           </Demo>
           <Demo
             value={0}
@@ -156,7 +161,7 @@ class App extends React.Component<any, AppState> {
               value + (await intercept(cb, "bypass")(4))
             }
           >
-            += await INTERCEPT(square(4)) => ???
+            INTERCEPT(square(4)) => ???
           </Demo>
         </div>
         <h2>Multiple arguments</h2>
@@ -166,14 +171,14 @@ class App extends React.Component<any, AppState> {
             value={""}
             onClick={(cb, value) => cb(value, "x", "y")}
           >
-            = await concat("", "x", "y") => "xy"
+            concat("", "x", "y") => "xy"
           </Demo>
           <Demo
             callback={this.concat}
             value={""}
             onClick={(cb, value) => intercept(cb, "call")(value, "x", "y")}
           >
-            = await concat(INTERCEPT("", "x", "y")) => "xy"
+            concat(INTERCEPT("", "x", "y")) => "xy"
           </Demo>
         </div>
       </div>
