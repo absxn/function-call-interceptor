@@ -187,8 +187,35 @@ class App extends React.Component<any, AppState> {
             concat(INTERCEPT("", "x", "y")) => "xy"
           </Demo>
         </div>
+        <h2>API call</h2>
+        <div className="demo">
+          <h3>Output</h3>
+          <h3>Trigger</h3>
+          <h3>Job</h3>
+          <Demo
+            callback={this.apiSum}
+            value={0}
+            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+          >
+            fetch("/sum", [1,2,3]) => 6
+          </Demo>
+        </div>
       </div>
     );
+  }
+
+  apiSum(...numbers: number[]): Promise<number> {
+    return fetch("http://localhost:3001/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ numbers }),
+    })
+      .then((response: any) => {
+        return response.json();
+      })
+      .then((body: { sum: number }) => body.sum);
   }
 
   square(value: number): Promise<number> {

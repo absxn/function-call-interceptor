@@ -1,8 +1,10 @@
 import express from "express";
 import bodyParser from "body-parser";
+import cors from "cors";
 
 const app = express();
 
+app.use(cors());
 app.use(bodyParser.json());
 
 app.post("/", function (req, res) {
@@ -18,7 +20,9 @@ app.post("/", function (req, res) {
 
   const numbers: number[] = req.body.numbers;
 
-  res.send({ sum: numbers.reduce((agg, val) => agg + val, 0) });
+  const sum = numbers.reduce((agg, val) => agg + val, 0);
+  console.info("sum(", numbers, ") =", sum);
+  res.send({ sum });
 });
 
 app.listen(3001);
