@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "types": ["node"],
+    "lib": ["es6", "es2017"],
+    "moduleResolution": "node",
+    "sourceMap": true
+  },
+  "include": ["./src/**"]
+}
