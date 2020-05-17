@@ -72,6 +72,7 @@ export default class InterceptorModal extends React.Component<
     const queue = this.props.queue;
     const interceptEvent = queue[this.state.activeEvent];
     const validInput = isValidJsonString(this.state.editedData);
+    const originalData = loadData(queue, this.state.activeEvent);
     return (
       <fieldset
         className={cx("interceptorModal", { disabled: !this.props.visible })}
@@ -127,6 +128,16 @@ export default class InterceptorModal extends React.Component<
             />
           </>
         )}
+        <button
+          disabled={this.state.editedData === originalData}
+          onClick={() => {
+            this.setState({
+              editedData: originalData,
+            });
+          }}
+        >
+          Reset
+        </button>
         <button
           disabled={!validInput}
           onClick={() => {
