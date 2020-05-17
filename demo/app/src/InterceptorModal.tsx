@@ -176,107 +176,122 @@ function uuidv4() {
   });
 }
 
-export function intercept<A extends any, R extends Promise<V>, V extends any>(
-  cb: (() => R) | ((...args: A[]) => R),
-  trigger: Trigger
-): (() => Promise<V>) | ((...args: A[]) => Promise<V>) {
+type InterceptedFunction =
+  | (() => Promise<any>)
+  | ((...args: any[]) => Promise<any>);
+
+export function intercept<
+  C extends InterceptedFunction,
+  A extends Parameters<C>,
+  V extends ReturnType<C>
+>(cb: C, trigger: Trigger): C {
   const uuid = uuidv4();
 
-  return async function () {
-    const originalArgs = Array.from(arguments);
+  return (
+    async function () {
+      const originalArgs = Array.from(arguments);
 
-    // Call interceptor
-    const interceptedArgs = await new Promise<A[]>((resolve) => {
-      if (trigger === "call" || trigger === "both") {
-        console.info(
-          `[${uuid}] Intercepted call function(${originalArgs
-            .map((a) => JSON.stringify(a))
-            .join(", ")}) => ?`
-        );
-        const event = new CustomEvent<CallEvent>("call", {
-          detail: {
-            uuid,
-            args: originalArgs,
-            trigger: "call",
-          },
-        });
+      // Call interceptor
+      const interceptedArgs = await new Promise<A[]>((resolve) => {
+        if (trigger === "call" || trigger === "both") {
+          console.info(
+            `[${uuid}] Intercepted call function(${originalArgs
+              .map((a) => JSON.stringify(a))
+              .join(", ")}) => ?`
+          );
+          const event = new CustomEvent<CallEvent>("call", {
+            detail: {
+              uuid,
+              args: originalArgs,
+              trigger: "call",
+            },
+          });
 
-        const responseListener =
-          ((callEvent: CustomEvent<CallEvent>) => {
-            // Handle only own events
-            if (callEvent.detail.uuid !== uuid) {
-              console.warn(`[${uuid}] Discarded call ${JSON.stringify(event)}`);
-              return;
-            }
+          const responseListener =
+            ((callEvent: CustomEvent<CallEvent>) => {
+              // Handle only own events
+              if (callEvent.detail.uuid !== uuid) {
+                console.warn(
+                  `[${uuid}] Discarded call ${JSON.stringify(event)}`
+                );
+                return;
+              }
 
-            eventBus.removeEventListener("response", responseListener);
-            resolve(callEvent.detail.args);
-          }) as EventListener;
+              eventBus.removeEventListener("response", responseListener);
+              resolve(callEvent.detail.args);
+            }) as EventListener;
 
-        eventBus.addEventListener("response", responseListener);
+          eventBus.addEventListener("response", responseListener);
 
-        eventBus.dispatchEvent(event);
-      } else {
-        resolve(originalArgs);
-      }
-    });
+          eventBus.dispatchEvent(event);
+        } else {
+          resolve(originalArgs);
+        }
+      });
 
-    // Return interceptor
-    return new Promise<V>(async (resolve) => {
-      // Bypass never calls the original code
-      const returnValue = await (trigger === "bypass"
-        ? Promise.resolve<any>("???") // <V> may be anything
-        : (() => {
-            console.info(
-              `[${uuid}] Calling function(${originalArgs
-                .map((a) => JSON.stringify(a))
-                .join(", ")}) => ?`
-            );
-            return interceptedArgs.length === 0
-              ? cb()
-              : cb(...(interceptedArgs as A[]));
-          })());
-
-      if (trigger === "return" || trigger === "both" || trigger === "bypass") {
-        const event = new CustomEvent<ReturnEvent>("call", {
-          detail: {
-            args: interceptedArgs,
-            rv: returnValue,
-            trigger: "return",
-            uuid,
-          },
-        });
-        console.info(
-          `[${uuid}] Intercepted return value => ${JSON.stringify(returnValue)}`
-        );
-        eventBus.dispatchEvent(event);
-
-        const responseListener =
-          ((event: CustomEvent<ReturnEvent>) => {
-            const returnEvent = event;
-
-            // Handle only own events
-            if (returnEvent.detail.uuid !== uuid) {
-              console.warn(
-                `[${uuid}] Discarded return ${JSON.stringify(event)}`
+      // Return interceptor
+      return new Promise(async (resolve) => {
+        // Bypass never calls the original code
+        const returnValue = await (trigger === "bypass"
+          ? Promise.resolve<any>("???") // <V> may be anything
+          : (() => {
+              console.info(
+                `[${uuid}] Calling function(${originalArgs
+                  .map((a) => JSON.stringify(a))
+                  .join(", ")}) => ?`
               );
-              return;
-            }
+              return interceptedArgs.length === 0
+                ? cb()
+                : cb(...(interceptedArgs as A[]));
+            })());
 
-            eventBus.removeEventListener("response", responseListener);
-            resolve(returnEvent.detail.rv);
-          }) as EventListener;
+        if (
+          trigger === "return" ||
+          trigger === "both" ||
+          trigger === "bypass"
+        ) {
+          const event = new CustomEvent<ReturnEvent>("call", {
+            detail: {
+              args: interceptedArgs,
+              rv: returnValue,
+              trigger: "return",
+              uuid,
+            },
+          });
+          console.info(
+            `[${uuid}] Intercepted return value => ${JSON.stringify(
+              returnValue
+            )}`
+          );
+          eventBus.dispatchEvent(event);
 
-        eventBus.addEventListener("response", responseListener);
-      } else {
-        resolve(returnValue);
-      }
-    }).then((returnValue) => {
-      console.info(`[${uuid}] Returning => ${JSON.stringify(returnValue)}`);
+          const responseListener =
+            ((event: CustomEvent<ReturnEvent>) => {
+              const returnEvent = event;
 
-      return returnValue;
-    });
-  };
+              // Handle only own events
+              if (returnEvent.detail.uuid !== uuid) {
+                console.warn(
+                  `[${uuid}] Discarded return ${JSON.stringify(event)}`
+                );
+                return;
+              }
+
+              eventBus.removeEventListener("response", responseListener);
+              resolve(returnEvent.detail.rv);
+            }) as EventListener;
+
+          eventBus.addEventListener("response", responseListener);
+        } else {
+          resolve(returnValue);
+        }
+      }).then((returnValue) => {
+        console.info(`[${uuid}] Returning => ${JSON.stringify(returnValue)}`);
+
+        return returnValue;
+      });
+    } as C
+  );
 }
 
 function render(
