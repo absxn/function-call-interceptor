@@ -120,6 +120,9 @@ class App extends React.Component<any, AppState> {
         <h1>Interceptor</h1>
         <h2>Single argument demo</h2>
         <div className="demo">
+          <h3>Output</h3>
+          <h3>Trigger</h3>
+          <h3>Job</h3>
           <Demo
             value={0}
             callback={this.square}
@@ -166,6 +169,9 @@ class App extends React.Component<any, AppState> {
         </div>
         <h2>Multiple arguments</h2>
         <div className="demo">
+          <h3>Output</h3>
+          <h3>Trigger</h3>
+          <h3>Job</h3>
           <Demo
             callback={this.concat}
             value={""}
