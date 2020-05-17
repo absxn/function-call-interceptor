@@ -175,6 +175,17 @@ export default class InterceptorModal extends React.Component<
   }
 }
 
+const socket = new WebSocket( "ws://localhost:3001/ws");
+
+socket.addEventListener("open", _event => {
+  socket.send("Ping");
+});
+
+socket.addEventListener("message", event => {
+  console.log("WebSocket", event.data);
+  socket.close();
+});
+
 const eventBus = new EventTarget();
 
 // https://stackoverflow.com/a/2117523

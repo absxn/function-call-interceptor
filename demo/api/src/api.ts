@@ -1,11 +1,18 @@
-import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import expressWs from "express-ws";
 
-const app = express();
+const { app } = expressWs(require("express")());
 
 app.use(cors());
 app.use(bodyParser.json());
+
+app.ws("/ws", function (ws, _req) {
+  ws.on("message", function (msg) {
+    console.info("WebSocket send(", msg, ")");
+    ws.send(msg);
+  });
+});
 
 app.post("/", function (req, res) {
   const body: any = req.body;
