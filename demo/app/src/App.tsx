@@ -1,12 +1,8 @@
 import React from "react";
 import "./App.css";
-import {
-  EventBus,
-  EventBusEvent,
-  intercept,
-  InterceptEvent,
-} from "./interceptor";
+import { intercept } from "./interceptor";
 import classNames from "classnames";
+import { eventBus } from "./eventBus";
 
 interface AppState {}
 
@@ -117,28 +113,6 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
     );
   }
 }
-
-class BrowserEventBus implements EventBus {
-  private bus: EventTarget;
-
-  constructor() {
-    this.bus = new EventTarget();
-  }
-
-  addEventListener<T>(typ: string, el: (e: EventBusEvent<T>) => void): void {
-    this.bus.addEventListener(typ, (el as unknown) as EventListener);
-  }
-
-  dispatchEvent(e: EventBusEvent<any>): void {
-    this.bus.dispatchEvent(new CustomEvent(e.type, { detail: e.detail }));
-  }
-
-  removeEventListener(typ: string, el: (e: EventBusEvent<any>) => void): void {
-    this.bus.removeEventListener(typ, (el as unknown) as EventListener);
-  }
-}
-
-export const eventBus = new BrowserEventBus();
 
 class App extends React.Component<any, AppState> {
   render() {

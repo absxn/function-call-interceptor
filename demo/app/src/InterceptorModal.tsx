@@ -10,6 +10,7 @@ import {
   InterceptEvent,
   ReturnEvent,
 } from "./interceptor";
+import { eventBus } from "./eventBus";
 
 type EventQueue = Array<EventBusEvent<InterceptEvent>>;
 
@@ -163,13 +164,27 @@ export default class InterceptorModal extends React.Component<
 
 const socket = new WebSocket("ws://localhost:3001/ws");
 
-socket.addEventListener("open", (_event) => {
-  socket.send("Ping");
-});
+socket.onopen = function (event) {
+  console.info("WebSocket onopen()", event);
+
+  eventBus.addEventListener("response", (event) => {
+    console.log("Websocket.send", event);
+    const data = JSON.stringify({ type: "response", detail: event.detail });
+
+    console.info("WebSocket.send()", data);
+    this.send(data);
+  });
+};
+
+socket.onclose = function (event) {
+  console.info("WebSocket onclose()");
+};
 
 socket.addEventListener("message", (event) => {
-  console.log("WebSocket", event.data);
-  socket.close();
+  console.log("WebSocket.message", event.data);
+  const json = JSON.parse(event.data);
+  console.log("  Parsed", json);
+  eventBus.dispatchEvent(json);
 });
 
 // https://stackoverflow.com/a/2117523
@@ -189,10 +204,13 @@ function render(
 export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   const queue: EventQueue = [];
 
-  function respond(eventToRemove: number, event: EventBusEvent<InterceptEvent>) {
+  function respond(
+    eventToRemove: number,
+    event: EventBusEvent<InterceptEvent>
+  ) {
     queue.splice(eventToRemove, 1);
 
-    console.info(`Dispatched ${JSON.stringify(event)}`);
+    console.info(`Dispatched`, event);
     eventBus.dispatchEvent(event);
 
     const elementById = document.getElementById(domId);

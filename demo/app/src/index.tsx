@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import App, { eventBus } from "./App";
+import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import { mountInterceptorClient } from "./InterceptorModal";
+import { eventBus } from "./eventBus";
 
 ReactDOM.render(
   <React.StrictMode>
