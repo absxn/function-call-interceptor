@@ -48,9 +48,7 @@ export interface EventBus {
 }
 
 export function intercept<C extends InterceptedFunction,
-    A extends Parameters<C>
-    // V extends ReturnType<C>
-    >(eventBus: EventBus, cb: C, trigger: Trigger): C {
+    A extends Parameters<C>>(eventBus: EventBus, cb: C, trigger: Trigger): C {
     const uuid = uuidv4();
 
     return (
