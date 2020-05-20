@@ -5,18 +5,19 @@ import ReactDOM from "react-dom";
 import {
   BypassEvent,
   CallEvent,
-  eventBus,
+  EventBus,
+  EventBusEvent,
   InterceptEvent,
   ReturnEvent,
 } from "./interceptor";
 
-type EventQueue = Array<CustomEvent<InterceptEvent>>;
+type EventQueue = Array<EventBusEvent<InterceptEvent>>;
 
 interface InterceptorModalProps {
   visible: boolean;
   onResponse: (
     eventToRemove: number,
-    event: CustomEvent<InterceptEvent>
+    event: EventBusEvent<InterceptEvent>
   ) => void;
   queue: EventQueue;
 }
@@ -26,7 +27,10 @@ interface InterceptorModalState {
   editedData: string;
 }
 
-function loadData(queue: CustomEvent<InterceptEvent>[], index: number): string {
+function loadData(
+  queue: EventBusEvent<InterceptEvent>[],
+  index: number
+): string {
   const detail = queue[index].detail;
   return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
 }
@@ -172,7 +176,7 @@ socket.addEventListener("message", (event) => {
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: CustomEvent<InterceptEvent>) => void
+  respond: (eventToRemove: number, event: EventBusEvent<InterceptEvent>) => void
 ) {
   return ReactDOM.render(
     <React.StrictMode>
@@ -182,10 +186,10 @@ function render(
   );
 }
 
-export function mountInterceptorClient(domId: string) {
+export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   const queue: EventQueue = [];
 
-  function respond(eventToRemove: number, event: CustomEvent<InterceptEvent>) {
+  function respond(eventToRemove: number, event: EventBusEvent<InterceptEvent>) {
     queue.splice(eventToRemove, 1);
 
     console.info(`Dispatched ${JSON.stringify(event)}`);
@@ -204,9 +208,9 @@ export function mountInterceptorClient(domId: string) {
   }
 
   eventBus.addEventListener("call", function requestListener(
-    event: CustomEvent<CallEvent>
+    event: EventBusEvent<CallEvent>
   ) {
     queue.push(event);
     render(domId, queue, respond);
-  } as EventListener);
+  });
 }

@@ -1,6 +1,11 @@
 import React from "react";
 import "./App.css";
-import { intercept } from "./interceptor";
+import {
+  EventBus,
+  EventBusEvent,
+  intercept,
+  InterceptEvent,
+} from "./interceptor";
 import classNames from "classnames";
 
 interface AppState {}
@@ -113,6 +118,28 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
   }
 }
 
+class BrowserEventBus implements EventBus {
+  private bus: EventTarget;
+
+  constructor() {
+    this.bus = new EventTarget();
+  }
+
+  addEventListener<T>(typ: string, el: (e: EventBusEvent<T>) => void): void {
+    this.bus.addEventListener(typ, (el as unknown) as EventListener);
+  }
+
+  dispatchEvent(e: EventBusEvent<any>): void {
+    this.bus.dispatchEvent(new CustomEvent(e.type, { detail: e.detail }));
+  }
+
+  removeEventListener(typ: string, el: (e: EventBusEvent<any>) => void): void {
+    this.bus.removeEventListener(typ, (el as unknown) as EventListener);
+  }
+}
+
+export const eventBus = new BrowserEventBus();
+
 class App extends React.Component<any, AppState> {
   render() {
     return (
@@ -134,7 +161,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(cb, "call")(1))
+              value + (await intercept(eventBus, cb, "call")(1))
             }
           >
             square(INTERCEPT(1)) => 1
@@ -143,7 +170,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(cb, "return")(2))
+              value + (await intercept(eventBus, cb, "return")(2))
             }
           >
             square(2) => INTERCEPT(4)
@@ -152,7 +179,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(cb, "both")(3))
+              value + (await intercept(eventBus, cb, "both")(3))
             }
           >
             square(INTERCEPT(3)) => INTERCEPT(9)
@@ -161,7 +188,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(cb, "bypass")(4))
+              value + (await intercept(eventBus, cb, "bypass")(4))
             }
           >
             INTERCEPT(square(4)) => ???
@@ -182,7 +209,9 @@ class App extends React.Component<any, AppState> {
           <Demo
             callback={this.concat}
             value={""}
-            onClick={(cb, value) => intercept(cb, "call")(value, "x", "y")}
+            onClick={(cb, value) =>
+              intercept(eventBus, cb, "call")(value, "x", "y")
+            }
           >
             concat(INTERCEPT("", "x", "y")) => "xy"
           </Demo>

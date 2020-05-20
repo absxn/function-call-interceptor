@@ -21,8 +21,6 @@ export interface ReturnEvent {
 
 export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
 
-export const eventBus = new EventTarget();
-
 export type Trigger = "bypass" | "call" | "return" | "both";
 
 // Though this version is not cryptographically safe
@@ -38,11 +36,21 @@ type InterceptedFunction =
     | (() => Promise<any>)
     | ((...args: any[]) => Promise<any>);
 
-export function intercept<
-    C extends InterceptedFunction,
-    A extends Parameters<C>,
-    V extends ReturnType<C>
-    >(cb: C, trigger: Trigger): C {
+export interface EventBusEvent<T> {
+    type: string;
+    detail: T
+}
+
+export interface EventBus {
+    addEventListener: (typ: string, el: (e: EventBusEvent<any>) => void) => void;
+    dispatchEvent: (e: EventBusEvent<any>) => void;
+    removeEventListener: (typ: string, el: (e: EventBusEvent<any>) => void) => void;
+}
+
+export function intercept<C extends InterceptedFunction,
+    A extends Parameters<C>
+    // V extends ReturnType<C>
+    >(eventBus: EventBus, cb: C, trigger: Trigger): C {
     const uuid = uuidv4();
 
     return (
@@ -57,16 +65,17 @@ export function intercept<
                             .map((a) => JSON.stringify(a))
                             .join(", ")}) => ?`
                     );
-                    const event = new CustomEvent<CallEvent>("call", {
+                    const event: EventBusEvent<CallEvent> = {
+                        type: "call",
                         detail: {
                             uuid,
                             args: originalArgs,
                             trigger: "call",
                         },
-                    });
+                    };
 
                     const responseListener =
-                        ((callEvent: CustomEvent<CallEvent>) => {
+                        ((callEvent: EventBusEvent<CallEvent>) => {
                             // Handle only own events
                             if (callEvent.detail.uuid !== uuid) {
                                 console.warn(
@@ -77,7 +86,7 @@ export function intercept<
 
                             eventBus.removeEventListener("response", responseListener);
                             resolve(callEvent.detail.args);
-                        }) as EventListener;
+                        });
 
                     eventBus.addEventListener("response", responseListener);
 
@@ -108,14 +117,15 @@ export function intercept<
                     trigger === "both" ||
                     trigger === "bypass"
                 ) {
-                    const event = new CustomEvent<ReturnEvent>("call", {
+                    const event: EventBusEvent<ReturnEvent> = {
+                        type: "call",
                         detail: {
                             args: interceptedArgs,
                             rv: returnValue,
                             trigger: "return",
                             uuid,
                         },
-                    });
+                    }
                     console.info(
                         `[${uuid}] Intercepted return value => ${JSON.stringify(
                             returnValue
@@ -124,7 +134,7 @@ export function intercept<
                     eventBus.dispatchEvent(event);
 
                     const responseListener =
-                        ((event: CustomEvent<ReturnEvent>) => {
+                        ((event: EventBusEvent<ReturnEvent>) => {
                             const returnEvent = event;
 
                             // Handle only own events
@@ -137,7 +147,7 @@ export function intercept<
 
                             eventBus.removeEventListener("response", responseListener);
                             resolve(returnEvent.detail.rv);
-                        }) as EventListener;
+                        });
 
                     eventBus.addEventListener("response", responseListener);
                 } else {
