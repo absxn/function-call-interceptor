@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { intercept } from "./InterceptorModal";
+import { intercept } from "./interceptor";
 import classNames from "classnames";
 
 interface AppState {}
