@@ -63,18 +63,24 @@ app.ws("/ws", function (ws, _req) {
   });
 });
 
-app.post("/", async function (req, res) {
+function parseInput(req: any): number[] | null {
   const body: any = req.body;
   if (
     !body.hasOwnProperty("numbers") ||
     !(body.numbers instanceof Array) ||
     body.numbers.filter((x: any) => typeof x !== "number").length > 0
   ) {
+    return null;
+  }
+  return req.body.numbers;
+}
+
+app.post("/", async function (req, res) {
+  const numbers = parseInput(req);
+  if (numbers === null) {
     res.send({ error: "Expecting body of type {numbers: number[]}" });
     return;
   }
-
-  const numbers: number[] = req.body.numbers;
 
   const sum = await intercept(
     eventBus,
