@@ -3,9 +3,9 @@
   "compilerOptions": {
     "module": "commonjs",
     "types": ["node"],
-    "lib": ["es6", "es2017"],
+    "lib": ["es6", "es2017", "dom"],
     "moduleResolution": "node",
     "sourceMap": true
   },
-  "include": ["./src/**"]
+  "include": ["./src/**/*"]
 }
