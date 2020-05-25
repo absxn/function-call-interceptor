@@ -8,6 +8,7 @@ import {
   intercept,
 } from "../../app/src/interceptor";
 import { EventEmitter } from "events";
+import { RequestHandler } from "express-serve-static-core";
 
 const { app } = expressWs(require("express")());
 
@@ -75,23 +76,72 @@ function parseInput(req: any): number[] | null {
   return req.body.numbers;
 }
 
-app.post("/", async function (req, res) {
-  const numbers = parseInput(req);
-  if (numbers === null) {
-    res.send({ error: "Expecting body of type {numbers: number[]}" });
-    return;
-  }
+function demoWrapper(cb: (n: number[]) => Promise<number>): RequestHandler {
+  return async (req, res) => {
+    const numbers = parseInput(req);
+    if (numbers === null) {
+      res.send({ error: "Expecting body of type {numbers: number[]}" });
+      return;
+    }
 
-  const sum = await intercept(
-    eventBus,
-    (ns: number[]) => {
-      return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
-    },
-    "call"
-  )(numbers);
-  console.info("sum(", numbers, ") =", sum);
-  res.send({ sum });
-});
+    const sum = await cb(numbers);
+
+    console.info("sum(", numbers, ") =", sum);
+    res.send({ sum });
+  };
+}
+
+app.post(
+  "/interceptor-demo/call",
+  demoWrapper((numbers) =>
+    intercept(
+      eventBus,
+      (ns: number[]) => {
+        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
+      },
+      "call"
+    )(numbers)
+  )
+);
+
+app.post(
+  "/interceptor-demo/return",
+  demoWrapper((numbers) =>
+    intercept(
+      eventBus,
+      (ns: number[]) => {
+        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
+      },
+      "return"
+    )(numbers)
+  )
+);
+
+app.post(
+  "/interceptor-demo/both",
+  demoWrapper((numbers) =>
+    intercept(
+      eventBus,
+      (ns: number[]) => {
+        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
+      },
+      "both"
+    )(numbers)
+  )
+);
+
+app.post(
+  "/interceptor-demo/bypass",
+  demoWrapper((numbers) =>
+    intercept(
+      eventBus,
+      (ns: number[]) => {
+        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
+      },
+      "bypass"
+    )(numbers)
+  )
+);
 
 const port = 3001;
 console.info(`Listening port ${port}`);

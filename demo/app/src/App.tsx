@@ -196,29 +196,52 @@ class App extends React.Component<any, AppState> {
           <h3>Trigger</h3>
           <h3>Job</h3>
           <Demo
-            callback={this.apiSum}
+            callback={this.apiSum("call")}
             value={0}
             onClick={async (cb, value) => value + (await cb(1, 2, 3))}
           >
-            fetch("/sum", [1,2,3]) => 6
+            fetch("/sum", INTERCEPT([1,2,3])) => 6
+          </Demo>
+          <Demo
+            callback={this.apiSum("return")}
+            value={0}
+            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+          >
+            fetch("/sum", [1,2,3]) => INTERCEPT(6)
+          </Demo>
+          <Demo
+            callback={this.apiSum("both")}
+            value={0}
+            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+          >
+            fetch("/sum", INTERCEPT([1,2,3])) => INTERCEPT(6)
+          </Demo>
+          <Demo
+            callback={this.apiSum("bypass")}
+            value={0}
+            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+          >
+            fetch("/sum", INTERCEPT([1,2,3])) => ???
           </Demo>
         </div>
       </div>
     );
   }
 
-  apiSum(...numbers: number[]): Promise<number> {
-    return fetch("http://localhost:3001/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ numbers }),
-    })
-      .then((response: any) => {
-        return response.json();
+  apiSum(path: "call" | "return" | "both" | "bypass") {
+    return (...numbers: number[]): Promise<number> => {
+      return fetch(`http://localhost:3001/interceptor-demo/${path}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ numbers }),
       })
-      .then((body: { sum: number }) => body.sum);
+        .then((response: any) => {
+          return response.json();
+        })
+        .then((body: { sum: number }) => body.sum);
+    };
   }
 
   square(value: number): Promise<number> {
