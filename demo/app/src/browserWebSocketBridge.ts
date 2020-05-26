@@ -6,9 +6,9 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
   socket.onopen = function (event) {
     console.info("WebSocket onopen()", event);
 
-    bus.addEventListener("response", (event) => {
+    bus.addEventListener("dispatch", (event) => {
       console.log("Websocket.send", event);
-      const data = JSON.stringify({ type: "response", detail: event.detail });
+      const data = JSON.stringify({ type: "dispatch", detail: event.detail });
 
       console.info("WebSocket.send()", data);
       this.send(data);

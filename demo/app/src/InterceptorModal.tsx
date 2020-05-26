@@ -136,13 +136,13 @@ export default class InterceptorModal extends React.Component<
 
             const response =
               interceptEvent.detail.trigger === "call"
-                ? new CustomEvent<CallEvent>("response", {
+                ? new CustomEvent<CallEvent>("dispatch", {
                     detail: {
                       ...interceptEvent.detail,
                       args: JSON.parse(editedData),
                     },
                   })
-                : new CustomEvent<ReturnEvent | BypassEvent>("response", {
+                : new CustomEvent<ReturnEvent | BypassEvent>("dispatch", {
                     detail: {
                       ...interceptEvent.detail,
                       rv: JSON.parse(editedData),
@@ -203,7 +203,7 @@ export function mountInterceptorClient(domId: string, eventBus: EventBus) {
     }
   }
 
-  eventBus.addEventListener("call", function requestListener(
+  eventBus.addEventListener("intercept", function requestListener(
     event: EventBusEvent<CallEvent>
   ) {
     queue.push(event);

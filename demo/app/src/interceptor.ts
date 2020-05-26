@@ -62,13 +62,13 @@ function busEvents(bus: EventBus, uuid: string) {
 
         eventListener(event.detail);
 
-        bus.removeEventListener("response", listener);
+        bus.removeEventListener("dispatch", listener);
       };
-      bus.addEventListener("response", listener);
+      bus.addEventListener("dispatch", listener);
     },
     capture<T extends InterceptEvent>(detail: T) {
       const event: EventBusEvent<T> = {
-        type: "call",
+        type: "intercept",
         detail,
       };
 

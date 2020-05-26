@@ -81,17 +81,17 @@ functions that are connected to any part of the network.
 
 ```
 BUS
- |    call   +-------------+
- |<----------|             |
- |           | INTERCEPTOR |
- +---------->|             |
- |   reply   +-------------+
+ |  intercept  +-------------+
+ |<------------|             |
+ |             | INTERCEPTOR |
+ +------------>|             |
+ |   dispatch  +-------------+
  |
- |   call    +-------------+
- +---------->|             |
- |           | DISPATCHER  |
- |<----------|             |
- |   reply   +-------------+
+ |  intercept  +-------------+
+ +------------>|             |
+ |             | DISPATCHER  |
+ |<------------|             |
+ |   dispatch  +-------------+
  |
  X
 ```

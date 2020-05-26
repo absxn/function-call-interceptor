@@ -11,7 +11,7 @@ export function nodeWebSocketBridge(bus: EventBus): WebsocketRequestHandler {
       console.log("type", typeof event);
       ws.send(JSON.stringify(event));
     };
-    bus.addEventListener("call", eventListener);
+    bus.addEventListener("intercept", eventListener);
 
     ws.on("message", function (msg) {
       console.info("WebSocket message", arguments);
@@ -20,7 +20,7 @@ export function nodeWebSocketBridge(bus: EventBus): WebsocketRequestHandler {
 
     ws.on("close", function () {
       console.info("WebSocket close", arguments);
-      bus.removeEventListener("call", eventListener);
+      bus.removeEventListener("intercept", eventListener);
     });
   };
 }
