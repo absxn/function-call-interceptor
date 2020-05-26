@@ -1,27 +1,12 @@
-// Bypass never calls the original code
-export interface BypassEvent {
-  trigger: "bypass";
-  uuid: string;
-  args?: any[];
-  rv?: any;
-}
-
-export interface CallEvent {
-  trigger: "call";
-  uuid: string;
-  args?: any[];
-}
-
-export interface ReturnEvent {
-  trigger: "return";
-  uuid: string;
-  args?: any[];
-  rv?: any;
-}
-
-export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
-
-export type Trigger = "bypass" | "call" | "return" | "both";
+import {
+  CallEvent,
+  EventBus,
+  EventBusEvent,
+  InterceptedFunction,
+  InterceptEvent,
+  ReturnEvent,
+  Trigger,
+} from "./types";
 
 // Though this version is not cryptographically safe
 function uuidv4() {
@@ -30,24 +15,6 @@ function uuidv4() {
       v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
-}
-
-type InterceptedFunction =
-  | (() => Promise<any>)
-  | ((...args: any[]) => Promise<any>);
-
-export interface EventBusEvent<T> {
-  type: string;
-  detail: T;
-}
-
-export interface EventBus {
-  addEventListener: (typ: string, el: (e: EventBusEvent<any>) => void) => void;
-  dispatchEvent: (e: EventBusEvent<any>) => void;
-  removeEventListener: (
-    typ: string,
-    el: (e: EventBusEvent<any>) => void
-  ) => void;
 }
 
 function busEvents(bus: EventBus, uuid: string) {

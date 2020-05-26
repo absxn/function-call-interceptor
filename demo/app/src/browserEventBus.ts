@@ -1,4 +1,4 @@
-import { EventBus, EventBusEvent } from "./interceptor";
+import { EventBus, EventBusEvent } from "./types";
 
 class BrowserEventBus implements EventBus {
   private bus: EventTarget;

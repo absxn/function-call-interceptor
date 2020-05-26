@@ -1,4 +1,4 @@
-import { EventBus, EventBusEvent } from "../../app/src/interceptor";
+import { EventBus, EventBusEvent } from "../../app/src/types";
 import { EventEmitter } from "events";
 
 class BusEmitter extends EventEmitter {}

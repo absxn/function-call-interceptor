@@ -1,4 +1,4 @@
-import { CallEvent, EventBus, EventBusEvent } from "../../app/src/interceptor";
+import { CallEvent, EventBus, EventBusEvent } from "../../app/src/types";
 import { WebsocketRequestHandler } from "express-ws";
 
 export function nodeWebSocketBridge(bus: EventBus): WebsocketRequestHandler {

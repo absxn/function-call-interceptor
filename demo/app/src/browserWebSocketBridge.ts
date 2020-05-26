@@ -1,4 +1,4 @@
-import { EventBus } from "./interceptor";
+import { EventBus } from "./types";
 
 export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
   const socket = new WebSocket(bridgeUrl);

@@ -9,7 +9,7 @@ import {
   EventBusEvent,
   InterceptEvent,
   ReturnEvent,
-} from "./interceptor";
+} from "./types";
 import { browserEventBus } from "./browserEventBus";
 import { browserWebSocketBridge } from "./browserWebSocketBridge";
 
