@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
+    "format": "prettier --write \"**/*.{ts,css,tsx,json,md}\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Teijo Laine",

@@ -24,4 +24,3 @@ export function nodeWebSocketBridge(bus: EventBus): WebsocketRequestHandler {
     });
   };
 }
-
