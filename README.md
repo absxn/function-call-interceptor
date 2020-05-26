@@ -22,7 +22,62 @@ Server component is not needed if only UI code is being inspected, and the
 interceptor UI is mounted to it. Communicatioon goes essentially through a
 "loopback".
 
-## Loopback
+## Event bus
+
+A bus is a process-/browser-local shared resource that connects the intercepted
+functions with a dispatcher.
+
+The dispatcher can be:
+
+- UI, used by human to modify the function call
+- Function, for scripted functionality
+- Bridge, allowing connection to another bus, and therefore possible external
+  dispatchers (see below).
+
+```
+    BUS
+     +--[ UI/function dispatcher ]
+     |
+     |   // Any async function can be wrapped by interceptor, suspending it for
+     |   // manupilation before the call, before return, both, or bypassing
+     |   // the real call altogether
+     +--[ intercept('call', func)(args) ]
+     +--[ intercept('return', func)(args) ]
+     +--[ intercept('both', func)(args) ]
+     +--[ intercept('bypass', func)(args) ]
+     |
+     X
+```
+
+## Event bridge
+
+For distributed applications, interaction e.g. in UI can go through the full
+application stack that may include multiple layers. A bridge connects multiple
+buses together, allowing any connected dispatcher to interact with intercepted
+functions that are connected to any part of the network.
+
+```
+ Browser          API
+   BUS            BUS
+    |              |
+    +=== BRIDGE ===+--[ intercept('call', func)(args) ]
+    |  dispatcher  |
+    |              X
+    |
+    |            API 2
+    |             BUS
+    +=== BRIDGE ===+--[ intercept('call', func)(args) ]
+    |  dispatcher  |
+    |              X
+    |
+    +--[ intercept('return', func)(args) ]
+    |
+    +--[ UI/function dispatcher ]
+    |
+    X
+```
+
+## Loopback demo
 
 UI-only setup
 
