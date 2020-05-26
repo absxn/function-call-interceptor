@@ -17,7 +17,7 @@ type EventQueue = Array<EventBusEvent<InterceptEvent>>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onResponse: (
+  onDispatch: (
     eventToRemove: number,
     event: EventBusEvent<InterceptEvent>
   ) => void;
@@ -149,7 +149,7 @@ export default class InterceptorModal extends React.Component<
                     },
                   });
 
-            this.props.onResponse(activeEvent, response);
+            this.props.onDispatch(activeEvent, response);
           }}
         >
           Dispatch{!validInput && " (malformed JSON input)"}
@@ -173,7 +173,7 @@ function render(
 ) {
   return ReactDOM.render(
     <React.StrictMode>
-      <InterceptorModal queue={queue} visible={true} onResponse={respond} />
+      <InterceptorModal queue={queue} visible={true} onDispatch={respond} />
     </React.StrictMode>,
     document.getElementById(domId)
   );

@@ -52,7 +52,7 @@ export interface EventBus {
 
 function busEvents(bus: EventBus, uuid: string) {
   return {
-    onResponse<T extends { uuid: string }>(eventListener: (e: T) => void) {
+    onDispatch<T extends { uuid: string }>(eventListener: (e: T) => void) {
       const listener = (event: EventBusEvent<T>) => {
         // Handle only own events
         if (event.detail.uuid !== uuid) {
@@ -66,7 +66,7 @@ function busEvents(bus: EventBus, uuid: string) {
       };
       bus.addEventListener("response", listener);
     },
-    dispatchCall<T extends InterceptEvent>(detail: T) {
+    capture<T extends InterceptEvent>(detail: T) {
       const event: EventBusEvent<T> = {
         type: "call",
         detail,
@@ -97,11 +97,11 @@ export function intercept<
             .join(", ")}) => ?`
         );
 
-        events.onResponse<CallEvent>((callEvent) => {
+        events.onDispatch<CallEvent>((callEvent) => {
           resolve(callEvent.args);
         });
 
-        events.dispatchCall({
+        events.capture({
           uuid,
           args: originalArgs,
           trigger: "call",
@@ -132,14 +132,14 @@ export function intercept<
           `[${uuid}] Intercepted return value => ${JSON.stringify(returnValue)}`
         );
 
-        events.dispatchCall({
+        events.capture({
           args: interceptedArgs,
           rv: returnValue,
           trigger: "return",
           uuid,
         });
 
-        events.onResponse<ReturnEvent>((event) => {
+        events.onDispatch<ReturnEvent>((event) => {
           resolve(event.rv);
         });
       } else {
