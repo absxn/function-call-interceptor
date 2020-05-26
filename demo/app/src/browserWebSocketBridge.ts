@@ -1,7 +1,7 @@
 import { EventBus } from "./interceptor";
 
-export function browserWebSocketBridge(bus: EventBus) {
-  const socket = new WebSocket("ws://localhost:3001/ws");
+export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
+  const socket = new WebSocket(bridgeUrl);
 
   socket.onopen = function (event) {
     console.info("WebSocket onopen()", event);

@@ -163,7 +163,7 @@ export default class InterceptorModal extends React.Component<
   }
 }
 
-browserWebSocketBridge(browserEventBus);
+browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 
 // https://stackoverflow.com/a/2117523
 function render(
