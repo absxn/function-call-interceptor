@@ -50,11 +50,40 @@ export interface EventBus {
   ) => void;
 }
 
+function busEvents(bus: EventBus, uuid: string) {
+  return {
+    onResponse<T extends { uuid: string }>(eventListener: (e: T) => void) {
+      const listener = (event: EventBusEvent<T>) => {
+        // Handle only own events
+        if (event.detail.uuid !== uuid) {
+          console.warn(`[${uuid}] Discarded return ${JSON.stringify(event)}`);
+          return;
+        }
+
+        eventListener(event.detail);
+
+        bus.removeEventListener("response", listener);
+      };
+      bus.addEventListener("response", listener);
+    },
+    dispatchCall<T extends InterceptEvent>(detail: T) {
+      const event: EventBusEvent<T> = {
+        type: "call",
+        detail,
+      };
+
+      bus.dispatchEvent(event);
+    },
+  };
+}
+
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
 >(eventBus: EventBus, cb: C, trigger: Trigger): C {
   const uuid = uuidv4();
+
+  const events = busEvents(eventBus, uuid);
 
   return async function () {
     const originalArgs = Array.from(arguments);
@@ -67,29 +96,16 @@ export function intercept<
             .map((a) => JSON.stringify(a))
             .join(", ")}) => ?`
         );
-        const event: EventBusEvent<CallEvent> = {
-          type: "call",
-          detail: {
-            uuid,
-            args: originalArgs,
-            trigger: "call",
-          },
-        };
 
-        const responseListener = (callEvent: EventBusEvent<CallEvent>) => {
-          // Handle only own events
-          if (callEvent.detail.uuid !== uuid) {
-            console.warn(`[${uuid}] Discarded call ${JSON.stringify(event)}`);
-            return;
-          }
+        events.onResponse<CallEvent>((callEvent) => {
+          resolve(callEvent.args);
+        });
 
-          eventBus.removeEventListener("response", responseListener);
-          resolve(callEvent.detail.args);
-        };
-
-        eventBus.addEventListener("response", responseListener);
-
-        eventBus.dispatchEvent(event);
+        events.dispatchCall({
+          uuid,
+          args: originalArgs,
+          trigger: "call",
+        });
       } else {
         resolve(originalArgs);
       }
@@ -112,34 +128,20 @@ export function intercept<
           })());
 
       if (trigger === "return" || trigger === "both" || trigger === "bypass") {
-        const event: EventBusEvent<ReturnEvent> = {
-          type: "call",
-          detail: {
-            args: interceptedArgs,
-            rv: returnValue,
-            trigger: "return",
-            uuid,
-          },
-        };
         console.info(
           `[${uuid}] Intercepted return value => ${JSON.stringify(returnValue)}`
         );
-        eventBus.dispatchEvent(event);
 
-        const responseListener = (event: EventBusEvent<ReturnEvent>) => {
-          const returnEvent = event;
+        events.dispatchCall({
+          args: interceptedArgs,
+          rv: returnValue,
+          trigger: "return",
+          uuid,
+        });
 
-          // Handle only own events
-          if (returnEvent.detail.uuid !== uuid) {
-            console.warn(`[${uuid}] Discarded return ${JSON.stringify(event)}`);
-            return;
-          }
-
-          eventBus.removeEventListener("response", responseListener);
-          resolve(returnEvent.detail.rv);
-        };
-
-        eventBus.addEventListener("response", responseListener);
+        events.onResponse<ReturnEvent>((event) => {
+          resolve(event.rv);
+        });
       } else {
         resolve(returnValue);
       }
