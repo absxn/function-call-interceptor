@@ -1,40 +1,15 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
-import { EventBus, EventBusEvent, intercept } from "../../app/src/interceptor";
-import { EventEmitter } from "events";
+import { intercept } from "../../app/src/interceptor";
 import { RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
+import { NodeEventBus } from "./nodeEventBus";
 
 const { app } = expressWs(require("express")());
 
 app.use(cors());
 app.use(bodyParser.json());
-
-class BusEmitter extends EventEmitter {}
-
-class NodeEventBus implements EventBus {
-  private bus: BusEmitter;
-
-  constructor() {
-    this.bus = new BusEmitter();
-  }
-
-  addEventListener<T>(typ: string, el: (e: EventBusEvent<T>) => void): void {
-    console.info("NodeEventBus.addEventListener", arguments);
-    this.bus.on(typ, (el as unknown) as EventListener);
-  }
-
-  dispatchEvent(event: EventBusEvent<any>): void {
-    console.info("NodeEventBus.dispatchEvent", arguments);
-    this.bus.emit(event.type, event);
-  }
-
-  removeEventListener(typ: string, el: (e: EventBusEvent<any>) => void): void {
-    console.info("NodeEventBus.removeEventListener", arguments);
-    this.bus.removeListener(typ, (el as unknown) as EventListener);
-  }
-}
 
 export const eventBus = new NodeEventBus();
 
