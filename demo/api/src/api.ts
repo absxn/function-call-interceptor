@@ -1,14 +1,10 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
-import {
-  CallEvent,
-  EventBus,
-  EventBusEvent,
-  intercept,
-} from "../../app/src/interceptor";
+import { EventBus, EventBusEvent, intercept } from "../../app/src/interceptor";
 import { EventEmitter } from "events";
 import { RequestHandler } from "express-serve-static-core";
+import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
 
 const { app } = expressWs(require("express")());
 
@@ -42,27 +38,7 @@ class NodeEventBus implements EventBus {
 
 export const eventBus = new NodeEventBus();
 
-app.ws("/ws", function (ws, _req) {
-  console.log("/ws");
-  const eventListener = function requestListener(
-    event: EventBusEvent<CallEvent>
-  ) {
-    console.log("requestListener", event);
-    console.log("type", typeof event);
-    ws.send(JSON.stringify(event));
-  };
-  eventBus.addEventListener("call", eventListener);
-
-  ws.on("message", function (msg) {
-    console.info("WebSocket message", arguments);
-    eventBus.dispatchEvent(JSON.parse(msg as string));
-  });
-
-  ws.on("close", function () {
-    console.info("WebSocket close", arguments);
-    eventBus.removeEventListener("call", eventListener);
-  });
-});
+app.ws("/ws", nodeWebSocketBridge(eventBus));
 
 function parseInput(req: any): number[] | null {
   const body: any = req.body;

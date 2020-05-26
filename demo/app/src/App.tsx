@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import { intercept } from "./interceptor";
 import classNames from "classnames";
-import { eventBus } from "./eventBus";
+import { browserEventBus } from "./browserEventBus";
 
 interface AppState {}
 
@@ -135,7 +135,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(eventBus, cb, "call")(1))
+              value + (await intercept(browserEventBus, cb, "call")(1))
             }
           >
             square(INTERCEPT(1)) => 1
@@ -144,7 +144,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(eventBus, cb, "return")(2))
+              value + (await intercept(browserEventBus, cb, "return")(2))
             }
           >
             square(2) => INTERCEPT(4)
@@ -153,7 +153,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(eventBus, cb, "both")(3))
+              value + (await intercept(browserEventBus, cb, "both")(3))
             }
           >
             square(INTERCEPT(3)) => INTERCEPT(9)
@@ -162,7 +162,7 @@ class App extends React.Component<any, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(eventBus, cb, "bypass")(4))
+              value + (await intercept(browserEventBus, cb, "bypass")(4))
             }
           >
             INTERCEPT(square(4)) => ???
@@ -184,7 +184,7 @@ class App extends React.Component<any, AppState> {
             callback={this.concat}
             value={""}
             onClick={(cb, value) =>
-              intercept(eventBus, cb, "call")(value, "x", "y")
+              intercept(browserEventBus, cb, "call")(value, "x", "y")
             }
           >
             concat(INTERCEPT("", "x", "y")) => "xy"

@@ -23,4 +23,4 @@ class BrowserEventBus implements EventBus {
   }
 }
 
-export const eventBus = new BrowserEventBus();
+export const browserEventBus = new BrowserEventBus();
