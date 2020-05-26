@@ -10,8 +10,10 @@ import {
   InterceptEvent,
   ReturnEvent,
 } from "./types";
-import { browserEventBus } from "./browserEventBus";
 import { browserWebSocketBridge } from "./browserWebSocketBridge";
+import { BrowserEventBus } from "./browserEventBus";
+
+export const browserEventBus = new BrowserEventBus();
 
 type EventQueue = Array<EventBusEvent<InterceptEvent>>;
 

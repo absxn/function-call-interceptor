@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import { intercept } from "./interceptor";
 import classNames from "classnames";
-import { browserEventBus } from "./browserEventBus";
+import { browserEventBus } from "./InterceptorModal";
 
 interface AppState {}
 

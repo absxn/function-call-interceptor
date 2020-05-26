@@ -1,6 +1,6 @@
 import { EventBus, EventBusEvent } from "./types";
 
-class BrowserEventBus implements EventBus {
+export class BrowserEventBus implements EventBus {
   private bus: EventTarget;
 
   constructor() {
@@ -22,5 +22,3 @@ class BrowserEventBus implements EventBus {
     this.bus.removeEventListener(typ, (el as unknown) as EventListener);
   }
 }
-
-export const browserEventBus = new BrowserEventBus();
