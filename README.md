@@ -77,6 +77,25 @@ functions that are connected to any part of the network.
     X
 ```
 
+## Events
+
+```
+BUS
+ |    call   +-------------+
+ |<----------|             |
+ |           | INTERCEPTOR |
+ +---------->|             |
+ |   reply   +-------------+
+ |
+ |   call    +-------------+
+ +---------->|             |
+ |           | DISPATCHER  |
+ |<----------|             |
+ |   reply   +-------------+
+ |
+ X
+```
+
 ## Loopback demo
 
 UI-only setup
