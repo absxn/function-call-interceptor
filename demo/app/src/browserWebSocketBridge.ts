@@ -6,9 +6,9 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
   socket.onopen = function (event) {
     console.info("WebSocket onopen()", event);
 
-    bus.addEventListener("dispatch", (event) => {
+    bus.onDispatch((event) => {
       console.log("Websocket.send", event);
-      const data = JSON.stringify({ type: "dispatch", detail: event.detail });
+      const data = JSON.stringify({ type: "dispatch", detail: event });
 
       console.info("WebSocket.send()", data);
       this.send(data);
@@ -23,6 +23,6 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
     console.log("WebSocket.message", event.data);
     const json = JSON.parse(event.data);
     console.log("  Parsed", json);
-    bus.dispatchEvent(json);
+    bus.dispatch(json);
   });
 }

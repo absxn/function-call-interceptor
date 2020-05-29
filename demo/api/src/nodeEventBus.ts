@@ -1,4 +1,4 @@
-import { EventBus, EventBusEvent } from "../../app/src/types";
+import { BusEvent, EventBus, InterceptEvent } from "../../app/src/types";
 import { EventEmitter } from "events";
 
 class BusEmitter extends EventEmitter {}
@@ -10,18 +10,24 @@ export class NodeEventBus implements EventBus {
     this.bus = new BusEmitter();
   }
 
-  addEventListener(typ: string, el: (e: EventBusEvent) => void): void {
-    console.info("NodeEventBus.addEventListener", arguments);
-    this.bus.on(typ, (el as unknown) as EventListener);
+  onDispatch(el: (e: InterceptEvent) => void): () => void {
+    console.info("NodeEventBus.onDispatch", arguments);
+    const listener = (e: { detail: BusEvent }) =>
+      e.detail.direction === "dispatch" ? el(e.detail.event) : null;
+    this.bus.on("event", listener);
+    return () => this.bus.removeListener("intercept", listener);
   }
 
-  dispatchEvent(event: EventBusEvent): void {
-    console.info("NodeEventBus.dispatchEvent", arguments);
-    this.bus.emit(event.type, event);
+  onIntercept(el: (e: InterceptEvent) => void): () => void {
+    console.info("NodeEventBus.onIntercept", arguments);
+    const listener = (e: { detail: BusEvent }) =>
+      e.detail.direction === "intercept" ? el(e.detail.event) : null;
+    this.bus.on("event", listener);
+    return () => this.bus.removeListener("intercept", listener);
   }
 
-  removeEventListener(typ: string, el: (e: EventBusEvent) => void): void {
-    console.info("NodeEventBus.removeEventListener", arguments);
-    this.bus.removeListener(typ, (el as unknown) as EventListener);
+  dispatch(event: InterceptEvent): void {
+    console.info("NodeEventBus.dispatch", arguments);
+    this.bus.emit("event", { direction: "dispatch", event });
   }
 }

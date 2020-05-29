@@ -1,8 +1,9 @@
 import {
+  BusEvent,
   EventBus,
-  EventBusEvent,
   InterceptedFunction,
   InterceptEvent,
+  RemoveListener,
   Trigger,
 } from "./types";
 
@@ -18,28 +19,24 @@ function uuidv4() {
 function busEvents(bus: EventBus, invocationUuid: string) {
   return {
     onDispatch(eventListener: (e: InterceptEvent) => void) {
-      const listener = (event: EventBusEvent) => {
+      let removeListener: RemoveListener;
+      const listener = (event: InterceptEvent) => {
         // Handle only own events
-        if (event.detail.invocationUuid !== invocationUuid) {
+        if (event.invocationUuid !== invocationUuid) {
           console.warn(
             `[${invocationUuid}] Discarded return ${JSON.stringify(event)}`
           );
           return;
         }
 
-        eventListener(event.detail);
+        eventListener(event);
 
-        bus.removeEventListener("dispatch", listener);
+        removeListener();
       };
-      bus.addEventListener("dispatch", listener);
+      removeListener = bus.onDispatch(listener);
     },
-    capture(detail: InterceptEvent) {
-      const event: EventBusEvent = {
-        type: "intercept",
-        detail,
-      };
-
-      bus.dispatchEvent(event);
+    capture(event: InterceptEvent) {
+      bus.intercept(event);
     },
   };
 }

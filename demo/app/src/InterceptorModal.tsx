@@ -7,6 +7,7 @@ import {
   CallEvent,
   EventBus,
   EventBusEvent,
+  InterceptEvent,
   ReturnEvent,
 } from "./types";
 import { browserWebSocketBridge } from "./browserWebSocketBridge";
@@ -14,11 +15,11 @@ import { BrowserEventBus } from "./browserEventBus";
 
 export const browserEventBus = new BrowserEventBus();
 
-type EventQueue = Array<EventBusEvent>;
+type EventQueue = Array<InterceptEvent>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onDispatch: (eventToRemove: number, event: EventBusEvent) => void;
+  onDispatch: (eventToRemove: number, event: InterceptEvent) => void;
   queue: EventQueue;
 }
 
@@ -27,8 +28,8 @@ interface InterceptorModalState {
   editedData: string;
 }
 
-function loadData(queue: EventBusEvent[], index: number): string {
-  const detail = queue[index].detail;
+function loadData(queue: InterceptEvent[], index: number): string {
+  const detail = queue[index];
   return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
 }
 
@@ -65,8 +66,8 @@ export default class InterceptorModal extends React.Component<
         <h2>Queue</h2>
         <ol className="eventSelector">
           {queue.map((e, index) => {
-            const uuidString = `${e.detail.interceptorUuid.split("-")[0]}.${
-              e.detail.invocationUuid.split("-")[0]
+            const uuidString = `${e.interceptorUuid.split("-")[0]}.${
+              e.invocationUuid.split("-")[0]
             }`;
             return (
               <li
@@ -83,12 +84,11 @@ export default class InterceptorModal extends React.Component<
                 >
                   uuid({uuidString}
                   {") "}
-                  {e.detail.trigger === "call" ? (
-                    <code>call({JSON.stringify(e.detail.args)}) => ?</code>
+                  {e.trigger === "call" ? (
+                    <code>call({JSON.stringify(e.args)}) => ?</code>
                   ) : (
                     <code>
-                      return({JSON.stringify(e.detail.args)}) =>{" "}
-                      {JSON.stringify(e.detail.rv)}
+                      return({JSON.stringify(e.args)}) => {JSON.stringify(e.rv)}
                     </code>
                   )}
                 </span>
@@ -96,7 +96,7 @@ export default class InterceptorModal extends React.Component<
             );
           })}
         </ol>
-        {interceptEvent.detail.trigger === "call" ? (
+        {interceptEvent.trigger === "call" ? (
           <>
             <h2>Arguments</h2>
             <pre>function(</pre>
@@ -110,7 +110,7 @@ export default class InterceptorModal extends React.Component<
         ) : (
           <>
             <h2>Return value</h2>
-            <pre>function({JSON.stringify(interceptEvent.detail.args)}) =></pre>
+            <pre>function({JSON.stringify(interceptEvent.args)}) =></pre>
             <textarea
               className={cx("editor", { invalidJson: !validInput })}
               onChange={this.updateValue.bind(this)}
@@ -137,19 +137,15 @@ export default class InterceptorModal extends React.Component<
             }
 
             const response =
-              interceptEvent.detail.trigger === "call"
-                ? new CustomEvent<CallEvent>("dispatch", {
-                    detail: {
-                      ...interceptEvent.detail,
-                      args: JSON.parse(editedData),
-                    },
-                  })
-                : new CustomEvent<ReturnEvent | BypassEvent>("dispatch", {
-                    detail: {
-                      ...interceptEvent.detail,
-                      rv: JSON.parse(editedData),
-                    },
-                  });
+              interceptEvent.trigger === "call"
+                ? {
+                    ...interceptEvent,
+                    args: JSON.parse(editedData),
+                  }
+                : {
+                    ...interceptEvent,
+                    rv: JSON.parse(editedData),
+                  };
 
             this.props.onDispatch(activeEvent, response);
           }}
@@ -171,7 +167,7 @@ browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: EventBusEvent) => void
+  respond: (eventToRemove: number, event: InterceptEvent) => void
 ) {
   return ReactDOM.render(
     <React.StrictMode>
@@ -184,10 +180,10 @@ function render(
 export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   const queue: EventQueue = [];
 
-  function respond(eventToRemove: number, event: EventBusEvent) {
+  function respond(eventToRemove: number, event: InterceptEvent) {
     queue.splice(eventToRemove, 1);
 
-    eventBus.dispatchEvent(event);
+    eventBus.dispatch(event);
 
     const elementById = document.getElementById(domId);
     if (elementById === null) {
@@ -201,9 +197,7 @@ export function mountInterceptorClient(domId: string, eventBus: EventBus) {
     }
   }
 
-  eventBus.addEventListener("intercept", function requestListener(
-    event: EventBusEvent
-  ) {
+  eventBus.onIntercept((event) => {
     queue.push(event);
     render(domId, queue, respond);
   });

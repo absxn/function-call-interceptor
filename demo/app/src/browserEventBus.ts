@@ -1,24 +1,46 @@
-import { EventBus, EventBusEvent } from "./types";
+import { EventBus, InterceptEvent } from "./types";
 
 export class BrowserEventBus implements EventBus {
+  private static busName = "event";
   private bus: EventTarget;
 
   constructor() {
     this.bus = new EventTarget();
   }
 
-  addEventListener<T>(typ: string, el: (e: EventBusEvent) => void): void {
-    console.info("BrowserEventBus.addEventListener", arguments);
-    this.bus.addEventListener(typ, (el as unknown) as EventListener);
+  onDispatch(el: (e: InterceptEvent) => void) {
+    console.info("BrowserEventBus.onDispatch", arguments);
+    const listener = (e: any) =>
+      e.detail.direction === "dispatch" ? el(e.detail.event) : null;
+    this.bus.addEventListener(BrowserEventBus.busName, listener);
+    return () =>
+      this.bus.removeEventListener(BrowserEventBus.busName, listener);
   }
 
-  dispatchEvent(e: EventBusEvent): void {
-    console.info("BrowserEventBus.dispatchEvent", arguments);
-    this.bus.dispatchEvent(new CustomEvent(e.type, { detail: e.detail }));
+  onIntercept(el: (e: InterceptEvent) => void) {
+    console.info("BrowserEventBus.onIntercept", arguments);
+    const listener = (e: any) =>
+      e.detail.direction === "intercept" ? el(e.detail.event) : null;
+    this.bus.addEventListener(BrowserEventBus.busName, listener);
+    return () =>
+      this.bus.removeEventListener(BrowserEventBus.busName, listener);
   }
 
-  removeEventListener(typ: string, el: (e: EventBusEvent) => void): void {
-    console.info("BrowserEventBus.removeEventListener", arguments);
-    this.bus.removeEventListener(typ, (el as unknown) as EventListener);
+  intercept(e: InterceptEvent): void {
+    console.info("BrowserEventBus.intercept", arguments);
+    this.bus.dispatchEvent(
+      new CustomEvent(BrowserEventBus.busName, {
+        detail: { direction: "intercept", event: e },
+      })
+    );
+  }
+
+  dispatch(e: InterceptEvent): void {
+    console.info("BrowserEventBus.dispatch", arguments);
+    this.bus.dispatchEvent(
+      new CustomEvent(BrowserEventBus.busName, {
+        detail: { direction: "dispatch", event: e },
+      })
+    );
   }
 }

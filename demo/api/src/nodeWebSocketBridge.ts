@@ -1,26 +1,21 @@
-import { CallEvent, EventBus, EventBusEvent } from "../../app/src/types";
+import { EventBus, InterceptEvent } from "../../app/src/types";
 import { WebsocketRequestHandler } from "express-ws";
 
 export function nodeWebSocketBridge(bus: EventBus): WebsocketRequestHandler {
   return function (ws, _req) {
-    console.log("/ws");
-    const eventListener = function requestListener(
-      event: EventBusEvent<CallEvent>
-    ) {
-      console.log("requestListener", event);
-      console.log("type", typeof event);
-      ws.send(JSON.stringify(event));
+    const eventListener = function requestListener(event: InterceptEvent) {
+      ws.send(JSON.stringify({ type: "intercept", detail: event }));
     };
-    bus.addEventListener("intercept", eventListener);
+    const removeListener = bus.onIntercept(eventListener);
 
     ws.on("message", function (msg) {
       console.info("WebSocket message", arguments);
-      bus.dispatchEvent(JSON.parse(msg as string));
+      bus.dispatch(JSON.parse(msg as string));
     });
 
     ws.on("close", function () {
       console.info("WebSocket close", arguments);
-      bus.removeEventListener("intercept", eventListener);
+      removeListener();
     });
   };
 }
