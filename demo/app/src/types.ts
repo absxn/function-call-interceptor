@@ -1,20 +1,23 @@
 // Bypass never calls the original code
 export interface BypassEvent {
   trigger: "bypass";
-  uuid: string;
+  interceptorUuid: string;
+  invocationUuid: string;
   args?: any[];
   rv?: any;
 }
 
 export interface CallEvent {
   trigger: "call";
-  uuid: string;
+  interceptorUuid: string;
+  invocationUuid: string;
   args?: any[];
 }
 
 export interface ReturnEvent {
   trigger: "return";
-  uuid: string;
+  interceptorUuid: string;
+  invocationUuid: string;
   args?: any[];
   rv?: any;
 }

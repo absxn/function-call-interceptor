@@ -17,13 +17,17 @@ function uuidv4() {
   });
 }
 
-function busEvents(bus: EventBus, uuid: string) {
+function busEvents(bus: EventBus, invocationUuid: string) {
   return {
-    onDispatch<T extends { uuid: string }>(eventListener: (e: T) => void) {
+    onDispatch<T extends { invocationUuid: string }>(
+      eventListener: (e: T) => void
+    ) {
       const listener = (event: EventBusEvent<T>) => {
         // Handle only own events
-        if (event.detail.uuid !== uuid) {
-          console.warn(`[${uuid}] Discarded return ${JSON.stringify(event)}`);
+        if (event.detail.invocationUuid !== invocationUuid) {
+          console.warn(
+            `[${invocationUuid}] Discarded return ${JSON.stringify(event)}`
+          );
           return;
         }
 
@@ -48,18 +52,20 @@ export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
 >(eventBus: EventBus, cb: C, trigger: Trigger): C {
-  const uuid = uuidv4();
-
-  const events = busEvents(eventBus, uuid);
+  const interceptorUuid = uuidv4();
 
   return async function () {
+    const invocationUuid = uuidv4();
+
+    const events = busEvents(eventBus, invocationUuid);
+
     const originalArgs = Array.from(arguments);
 
     // Call interceptor
     const interceptedArgs = await new Promise<A[]>((resolve) => {
       if (trigger === "call" || trigger === "both") {
         console.info(
-          `[${uuid}] Intercepted call function(${originalArgs
+          `[${interceptorUuid}] Intercepted call function(${originalArgs
             .map((a) => JSON.stringify(a))
             .join(", ")}) => ?`
         );
@@ -69,7 +75,8 @@ export function intercept<
         });
 
         events.capture({
-          uuid,
+          interceptorUuid,
+          invocationUuid,
           args: originalArgs,
           trigger: "call",
         });
@@ -85,7 +92,7 @@ export function intercept<
         ? Promise.resolve<any>("???") // <V> may be anything
         : (() => {
             console.info(
-              `[${uuid}] Calling function(${originalArgs
+              `[${interceptorUuid}] Calling function(${originalArgs
                 .map((a) => JSON.stringify(a))
                 .join(", ")}) => ?`
             );
@@ -96,14 +103,17 @@ export function intercept<
 
       if (trigger === "return" || trigger === "both" || trigger === "bypass") {
         console.info(
-          `[${uuid}] Intercepted return value => ${JSON.stringify(returnValue)}`
+          `[${interceptorUuid}] Intercepted return value => ${JSON.stringify(
+            returnValue
+          )}`
         );
 
         events.capture({
           args: interceptedArgs,
+          invocationUuid,
           rv: returnValue,
           trigger: "return",
-          uuid,
+          interceptorUuid,
         });
 
         events.onDispatch<ReturnEvent>((event) => {
@@ -113,7 +123,9 @@ export function intercept<
         resolve(returnValue);
       }
     }).then((returnValue) => {
-      console.info(`[${uuid}] Returning => ${JSON.stringify(returnValue)}`);
+      console.info(
+        `[${interceptorUuid}] Returning => ${JSON.stringify(returnValue)}`
+      );
 
       return returnValue;
     });
