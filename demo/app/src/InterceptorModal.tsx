@@ -2,18 +2,11 @@ import React, { ChangeEvent } from "react";
 import cx from "classnames";
 import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
-import {
-  BypassEvent,
-  CallEvent,
-  EventBus,
-  EventBusEvent,
-  InterceptEvent,
-  ReturnEvent,
-} from "./types";
+import { InterceptBus, InterceptEvent } from "./types";
 import { browserWebSocketBridge } from "./browserWebSocketBridge";
-import { BrowserEventBus } from "./browserEventBus";
+import { EventBus } from "./eventBus";
 
-export const browserEventBus = new BrowserEventBus();
+export const browserEventBus = new EventBus();
 
 type EventQueue = Array<InterceptEvent>;
 
@@ -177,7 +170,7 @@ function render(
   );
 }
 
-export function mountInterceptorClient(domId: string, eventBus: EventBus) {
+export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
 
   function respond(eventToRemove: number, event: InterceptEvent) {
@@ -197,7 +190,7 @@ export function mountInterceptorClient(domId: string, eventBus: EventBus) {
     }
   }
 
-  eventBus.onIntercept((event) => {
+  eventBus.onCapture((event) => {
     queue.push(event);
     render(domId, queue, respond);
   });

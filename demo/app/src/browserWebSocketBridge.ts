@@ -1,6 +1,6 @@
-import { EventBus } from "./types";
+import { InterceptBus } from "./types";
 
-export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
+export function browserWebSocketBridge(bridgeUrl: string, bus: InterceptBus) {
   const socket = new WebSocket(bridgeUrl);
 
   socket.onopen = function (event) {
@@ -8,7 +8,7 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
 
     bus.onDispatch((event) => {
       console.log("Websocket.send", event);
-      const data = JSON.stringify({ type: "dispatch", detail: event });
+      const data = JSON.stringify({ direction: "dispatch", event });
 
       console.info("WebSocket.send()", data);
       this.send(data);
@@ -23,6 +23,12 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: EventBus) {
     console.log("WebSocket.message", event.data);
     const json = JSON.parse(event.data);
     console.log("  Parsed", json);
-    bus.dispatch(json);
+    if (json.direction === "capture") {
+      bus.capture(json.event);
+    } else if (json.direction === "dispatch") {
+      bus.dispatch(json.event);
+    } else {
+      console.error("Unexpected direction", event.data);
+    }
   });
 }

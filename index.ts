@@ -17,11 +17,11 @@ async function demoFunction<B extends {}, R extends {}>(params: {
 }
 
 interface InterceptReturn {
-  op: "intercept-return";
+  op: "capture-return";
 }
 
 interface InterceptCall {
-  op: "intercept-call";
+  op: "capture-call";
 }
 
 interface DelayCall {
@@ -50,11 +50,11 @@ function wrap<T extends (...args: any) => Promise<any>>(
             setTimeout(() => resolve(returnValue), 100)
           );
         });
-      case "intercept-call":
+      case "capture-call":
         return new Promise((resolve) => {
           setTimeout(() => fn(...args, { intercept: true }).then(resolve), 100);
         });
-      case "intercept-return":
+      case "capture-return":
         return new Promise((resolve) => {
           fn(...args).then((returnValue) =>
             resolve({ ...returnValue, intercept: true })
@@ -84,7 +84,7 @@ async function main() {
   });
 
   await benchmark(() => {
-    const wrapped = wrap({ op: "intercept-call" }, demoFunction);
+    const wrapped = wrap({ op: "capture-call" }, demoFunction);
 
     return wrapped({ url: "localhost", method: "GET" });
   });

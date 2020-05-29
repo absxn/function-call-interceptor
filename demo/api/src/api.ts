@@ -4,14 +4,14 @@ import expressWs from "express-ws";
 import { intercept } from "../../app/src/interceptor";
 import { RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
-import { NodeEventBus } from "./nodeEventBus";
+import { EventBus } from "../../app/src/eventBus";
 
 const { app } = expressWs(require("express")());
 
 app.use(cors());
 app.use(bodyParser.json());
 
-export const eventBus = new NodeEventBus();
+export const eventBus = new EventBus();
 
 app.ws("/ws", nodeWebSocketBridge(eventBus));
 

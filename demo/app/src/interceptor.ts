@@ -1,6 +1,5 @@
 import {
-  BusEvent,
-  EventBus,
+  InterceptBus,
   InterceptedFunction,
   InterceptEvent,
   RemoveListener,
@@ -16,7 +15,7 @@ function uuidv4() {
   });
 }
 
-function busEvents(bus: EventBus, invocationUuid: string) {
+function busEvents(bus: InterceptBus, invocationUuid: string) {
   return {
     onDispatch(eventListener: (e: InterceptEvent) => void) {
       let removeListener: RemoveListener;
@@ -36,7 +35,7 @@ function busEvents(bus: EventBus, invocationUuid: string) {
       removeListener = bus.onDispatch(listener);
     },
     capture(event: InterceptEvent) {
-      bus.intercept(event);
+      bus.capture(event);
     },
   };
 }
@@ -44,7 +43,7 @@ function busEvents(bus: EventBus, invocationUuid: string) {
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
->(eventBus: EventBus, cb: C, trigger: Trigger): C {
+>(eventBus: InterceptBus, cb: C, trigger: Trigger): C {
   const interceptorUuid = uuidv4();
 
   return async function () {

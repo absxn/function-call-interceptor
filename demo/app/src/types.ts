@@ -27,7 +27,7 @@ export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
 export type Trigger = "bypass" | "call" | "return" | "both";
 
 export interface BusEvent {
-  direction: "intercept" | "dispatch";
+  direction: "capture" | "dispatch";
   event: InterceptEvent;
 }
 
@@ -38,11 +38,13 @@ export interface EventBusEvent {
 
 export type RemoveListener = () => void;
 
-export interface EventBus {
-  onDispatch: (el: (e: InterceptEvent) => void) => RemoveListener;
-  onIntercept: (el: (e: InterceptEvent) => void) => RemoveListener;
-  intercept: (e: InterceptEvent) => void;
-  dispatch: (e: InterceptEvent) => void;
+export type InterceptHandler = (event: InterceptEvent) => void;
+
+export interface InterceptBus {
+  capture: InterceptHandler;
+  dispatch: InterceptHandler;
+  onCapture: (listener: InterceptHandler) => RemoveListener;
+  onDispatch: (listener: InterceptHandler) => RemoveListener;
 }
 
 export type InterceptedFunction =
