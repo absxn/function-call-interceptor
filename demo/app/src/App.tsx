@@ -245,14 +245,12 @@ class App extends React.Component<any, AppState> {
   }
 
   square(value: number): Promise<number> {
-    console.info(`App: square(${value})`);
     return new Promise((resolve) => {
       setTimeout(() => resolve(value * value), 500);
     });
   }
 
   concat(base: string, ...strings: string[]): Promise<string> {
-    console.info(`App: concat(${JSON.stringify(strings)})`);
     return new Promise((resolve) => {
       setTimeout(() => resolve([base].concat(strings).join("")), 500);
     });
