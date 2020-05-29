@@ -1,32 +1,25 @@
-import { BusEvent, InterceptBus, InterceptEvent } from "../../app/src/types";
+import { InterceptBus, InterceptEvent } from "../../app/src/types";
 import { WebsocketRequestHandler } from "express-ws";
 
 export function nodeWebSocketBridge(
   bus: InterceptBus
 ): WebsocketRequestHandler {
-  const relay: { [uuid: string]: true } = {};
   return function (ws, _req) {
-    const eventListener = (direction: string) => (event: InterceptEvent) => {
-      if (relay.hasOwnProperty(event.invocationUuid)) {
-        // Prevent feedback loop of bridging back event that we just received
-        delete relay[event.invocationUuid];
-        return;
-      }
-      const data = JSON.stringify({ direction, event });
+    const eventListener = (event: InterceptEvent) => {
+      const data = JSON.stringify(event);
       console.info("WebSocket send", data);
       ws.send(data);
     };
-    const removeCaptureListener = bus.onCapture(eventListener("capture"));
-    const removeDispatchListener = bus.onDispatch(eventListener("dispatch"));
+    const removeCaptureListener = bus.onCapture(eventListener);
+    const removeDispatchListener = bus.onDispatch(eventListener);
 
     ws.on("message", function (msg) {
       console.info("WebSocket message", arguments);
-      const event: BusEvent = JSON.parse(msg as string);
-      relay[event.event.invocationUuid] = true;
+      const event: InterceptEvent = JSON.parse(msg as string);
       if (event.direction === "capture") {
-        bus.capture(event.event);
+        bus.capture(event);
       } else if (event.direction === "dispatch") {
-        bus.dispatch(event.event);
+        bus.dispatch(event);
       } else {
         console.error("Unexpected direction", event);
       }

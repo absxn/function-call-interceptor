@@ -4,16 +4,8 @@ import {
   InterceptEvent,
   RemoveListener,
   Trigger,
+  uuidv4,
 } from "./types";
-
-// Though this version is not cryptographically safe
-function uuidv4() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 function busEvents(bus: InterceptBus, invocationUuid: string) {
   return {
@@ -75,6 +67,8 @@ export function intercept<
           invocationUuid,
           args: originalArgs,
           trigger: "call",
+          direction: "capture",
+          sourceUuid: [],
         });
       } else {
         resolve(originalArgs);
@@ -110,6 +104,8 @@ export function intercept<
           rv: returnValue,
           trigger: "return",
           interceptorUuid,
+          direction: "capture",
+          sourceUuid: [],
         });
 
         events.onDispatch((event) => {

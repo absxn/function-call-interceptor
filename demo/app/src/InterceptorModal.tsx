@@ -133,10 +133,14 @@ export default class InterceptorModal extends React.Component<
               interceptEvent.trigger === "call"
                 ? {
                     ...interceptEvent,
+                    direction: "dispatch" as const,
+                    sourceUuid: [],
                     args: JSON.parse(editedData),
                   }
                 : {
                     ...interceptEvent,
+                    direction: "dispatch" as const,
+                    sourceUuid: [],
                     rv: JSON.parse(editedData),
                   };
 
