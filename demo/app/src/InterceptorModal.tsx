@@ -71,30 +71,37 @@ export default class InterceptorModal extends React.Component<
         <h1>Intercepted</h1>
         <h2>Queue</h2>
         <ol className="eventSelector">
-          {queue.map((e, index) => (
-            <li
-              key={index}
-              className={cx({ activeEvent: index === activeEvent })}
-            >
-              <span
-                onClick={() => {
-                  this.setState({
-                    activeEvent: index,
-                    editedData: loadData(this.props.queue, index),
-                  });
-                }}
+          {queue.map((e, index) => {
+            const uuidString = `${e.detail.interceptorUuid.split("-")[0]}.${
+              e.detail.invocationUuid.split("-")[0]
+            }`;
+            return (
+              <li
+                key={index}
+                className={cx({ activeEvent: index === activeEvent })}
               >
-                {e.detail.trigger === "call" ? (
-                  <code>call({JSON.stringify(e.detail.args)}) => ?</code>
-                ) : (
-                  <code>
-                    return({JSON.stringify(e.detail.args)}) =>{" "}
-                    {JSON.stringify(e.detail.rv)}
-                  </code>
-                )}
-              </span>
-            </li>
-          ))}
+                <span
+                  onClick={() => {
+                    this.setState({
+                      activeEvent: index,
+                      editedData: loadData(this.props.queue, index),
+                    });
+                  }}
+                >
+                  uuid({uuidString}
+                  {") "}
+                  {e.detail.trigger === "call" ? (
+                    <code>call({JSON.stringify(e.detail.args)}) => ?</code>
+                  ) : (
+                    <code>
+                      return({JSON.stringify(e.detail.args)}) =>{" "}
+                      {JSON.stringify(e.detail.rv)}
+                    </code>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ol>
         {interceptEvent.detail.trigger === "call" ? (
           <>
