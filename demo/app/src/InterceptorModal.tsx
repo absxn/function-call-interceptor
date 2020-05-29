@@ -7,7 +7,6 @@ import {
   CallEvent,
   EventBus,
   EventBusEvent,
-  InterceptEvent,
   ReturnEvent,
 } from "./types";
 import { browserWebSocketBridge } from "./browserWebSocketBridge";
@@ -15,14 +14,11 @@ import { BrowserEventBus } from "./browserEventBus";
 
 export const browserEventBus = new BrowserEventBus();
 
-type EventQueue = Array<EventBusEvent<InterceptEvent>>;
+type EventQueue = Array<EventBusEvent>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onDispatch: (
-    eventToRemove: number,
-    event: EventBusEvent<InterceptEvent>
-  ) => void;
+  onDispatch: (eventToRemove: number, event: EventBusEvent) => void;
   queue: EventQueue;
 }
 
@@ -31,10 +27,7 @@ interface InterceptorModalState {
   editedData: string;
 }
 
-function loadData(
-  queue: EventBusEvent<InterceptEvent>[],
-  index: number
-): string {
+function loadData(queue: EventBusEvent[], index: number): string {
   const detail = queue[index].detail;
   return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
 }
@@ -178,7 +171,7 @@ browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: EventBusEvent<InterceptEvent>) => void
+  respond: (eventToRemove: number, event: EventBusEvent) => void
 ) {
   return ReactDOM.render(
     <React.StrictMode>
@@ -191,10 +184,7 @@ function render(
 export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   const queue: EventQueue = [];
 
-  function respond(
-    eventToRemove: number,
-    event: EventBusEvent<InterceptEvent>
-  ) {
+  function respond(eventToRemove: number, event: EventBusEvent) {
     queue.splice(eventToRemove, 1);
 
     eventBus.dispatchEvent(event);
@@ -212,7 +202,7 @@ export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   }
 
   eventBus.addEventListener("intercept", function requestListener(
-    event: EventBusEvent<CallEvent>
+    event: EventBusEvent
   ) {
     queue.push(event);
     render(domId, queue, respond);

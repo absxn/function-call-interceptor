@@ -7,17 +7,17 @@ export class BrowserEventBus implements EventBus {
     this.bus = new EventTarget();
   }
 
-  addEventListener<T>(typ: string, el: (e: EventBusEvent<T>) => void): void {
+  addEventListener<T>(typ: string, el: (e: EventBusEvent) => void): void {
     console.info("BrowserEventBus.addEventListener", arguments);
     this.bus.addEventListener(typ, (el as unknown) as EventListener);
   }
 
-  dispatchEvent(e: EventBusEvent<any>): void {
+  dispatchEvent(e: EventBusEvent): void {
     console.info("BrowserEventBus.dispatchEvent", arguments);
     this.bus.dispatchEvent(new CustomEvent(e.type, { detail: e.detail }));
   }
 
-  removeEventListener(typ: string, el: (e: EventBusEvent<any>) => void): void {
+  removeEventListener(typ: string, el: (e: EventBusEvent) => void): void {
     console.info("BrowserEventBus.removeEventListener", arguments);
     this.bus.removeEventListener(typ, (el as unknown) as EventListener);
   }

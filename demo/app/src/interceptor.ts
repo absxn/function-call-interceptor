@@ -1,10 +1,8 @@
 import {
-  CallEvent,
   EventBus,
   EventBusEvent,
   InterceptedFunction,
   InterceptEvent,
-  ReturnEvent,
   Trigger,
 } from "./types";
 
@@ -19,10 +17,8 @@ function uuidv4() {
 
 function busEvents(bus: EventBus, invocationUuid: string) {
   return {
-    onDispatch<T extends { invocationUuid: string }>(
-      eventListener: (e: T) => void
-    ) {
-      const listener = (event: EventBusEvent<T>) => {
+    onDispatch(eventListener: (e: InterceptEvent) => void) {
+      const listener = (event: EventBusEvent) => {
         // Handle only own events
         if (event.detail.invocationUuid !== invocationUuid) {
           console.warn(
@@ -37,8 +33,8 @@ function busEvents(bus: EventBus, invocationUuid: string) {
       };
       bus.addEventListener("dispatch", listener);
     },
-    capture<T extends InterceptEvent>(detail: T) {
-      const event: EventBusEvent<T> = {
+    capture(detail: InterceptEvent) {
+      const event: EventBusEvent = {
         type: "intercept",
         detail,
       };
@@ -74,7 +70,7 @@ export function intercept<
             .join(", ")}) => ?`
         );
 
-        events.onDispatch<CallEvent>((callEvent) => {
+        events.onDispatch((callEvent) => {
           resolve(callEvent.args);
         });
 
@@ -120,7 +116,12 @@ export function intercept<
           interceptorUuid,
         });
 
-        events.onDispatch<ReturnEvent>((event) => {
+        events.onDispatch((event) => {
+          if (event.trigger !== "return") {
+            throw new Error(
+              `Expected return event, got ${JSON.stringify(event)}`
+            );
+          }
           resolve(event.rv);
         });
       } else {

@@ -10,17 +10,17 @@ export class NodeEventBus implements EventBus {
     this.bus = new BusEmitter();
   }
 
-  addEventListener<T>(typ: string, el: (e: EventBusEvent<T>) => void): void {
+  addEventListener(typ: string, el: (e: EventBusEvent) => void): void {
     console.info("NodeEventBus.addEventListener", arguments);
     this.bus.on(typ, (el as unknown) as EventListener);
   }
 
-  dispatchEvent(event: EventBusEvent<any>): void {
+  dispatchEvent(event: EventBusEvent): void {
     console.info("NodeEventBus.dispatchEvent", arguments);
     this.bus.emit(event.type, event);
   }
 
-  removeEventListener(typ: string, el: (e: EventBusEvent<any>) => void): void {
+  removeEventListener(typ: string, el: (e: EventBusEvent) => void): void {
     console.info("NodeEventBus.removeEventListener", arguments);
     this.bus.removeListener(typ, (el as unknown) as EventListener);
   }

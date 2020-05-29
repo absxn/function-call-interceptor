@@ -26,18 +26,15 @@ export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
 
 export type Trigger = "bypass" | "call" | "return" | "both";
 
-export interface EventBusEvent<T> {
+export interface EventBusEvent {
   type: string;
-  detail: T;
+  detail: InterceptEvent;
 }
 
 export interface EventBus {
-  addEventListener: (typ: string, el: (e: EventBusEvent<any>) => void) => void;
-  dispatchEvent: (e: EventBusEvent<any>) => void;
-  removeEventListener: (
-    typ: string,
-    el: (e: EventBusEvent<any>) => void
-  ) => void;
+  addEventListener: (typ: string, el: (e: EventBusEvent) => void) => void;
+  dispatchEvent: (e: EventBusEvent) => void;
+  removeEventListener: (typ: string, el: (e: EventBusEvent) => void) => void;
 }
 
 export type InterceptedFunction =
