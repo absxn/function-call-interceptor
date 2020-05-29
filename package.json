@@ -6,7 +6,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{ts,css,tsx,json,md}\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently --names \"API,APP\" -c \"bgBlue.bold,bgMagenta.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && npm start)\""
+    "start": "concurrently --names \"APP,API\" -c \"bgBlue.bold,bgMagenta.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && npm start)\""
   },
   "author": "Teijo Laine",
   "license": "ISC",
