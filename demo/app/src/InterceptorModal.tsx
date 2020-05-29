@@ -190,7 +190,6 @@ export function mountInterceptorClient(domId: string, eventBus: EventBus) {
   ) {
     queue.splice(eventToRemove, 1);
 
-    console.info(`Dispatched`, event);
     eventBus.dispatchEvent(event);
 
     const elementById = document.getElementById(domId);

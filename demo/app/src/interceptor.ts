@@ -61,11 +61,15 @@ export function intercept<
 
     const originalArgs = Array.from(arguments);
 
+    const uuidString = `${interceptorUuid.split("-")[0]}.${
+      invocationUuid.split("-")[0]
+    }`;
+
     // Call interceptor
     const interceptedArgs = await new Promise<A[]>((resolve) => {
       if (trigger === "call" || trigger === "both") {
         console.info(
-          `[${interceptorUuid}] Intercepted call function(${originalArgs
+          `[${uuidString}] Intercepted call function(${originalArgs
             .map((a) => JSON.stringify(a))
             .join(", ")}) => ?`
         );
@@ -92,7 +96,7 @@ export function intercept<
         ? Promise.resolve<any>("???") // <V> may be anything
         : (() => {
             console.info(
-              `[${interceptorUuid}] Calling function(${originalArgs
+              `[${uuidString}] Calling function(${originalArgs
                 .map((a) => JSON.stringify(a))
                 .join(", ")}) => ?`
             );
@@ -103,7 +107,7 @@ export function intercept<
 
       if (trigger === "return" || trigger === "both" || trigger === "bypass") {
         console.info(
-          `[${interceptorUuid}] Intercepted return value => ${JSON.stringify(
+          `[${uuidString}] Intercepted return value => ${JSON.stringify(
             returnValue
           )}`
         );
@@ -124,7 +128,7 @@ export function intercept<
       }
     }).then((returnValue) => {
       console.info(
-        `[${interceptorUuid}] Returning => ${JSON.stringify(returnValue)}`
+        `[${uuidString}] Returning => ${JSON.stringify(returnValue)}`
       );
 
       return returnValue;
