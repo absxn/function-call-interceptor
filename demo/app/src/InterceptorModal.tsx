@@ -22,6 +22,9 @@ interface InterceptorModalState {
 }
 
 function loadData(queue: InterceptEvent[], index: number): string {
+  if (queue.length === 0) {
+    throw new Error("Unexpected zero queue length");
+  }
   const detail = queue[index];
   return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
 }
@@ -174,6 +177,16 @@ function render(
   );
 }
 
+function unmount(domId: string) {
+  const elementById = document.getElementById(domId);
+
+  if (elementById === null) {
+    throw new Error(`Can't find interceptor root element with #${domId}`);
+  } else {
+    ReactDOM.unmountComponentAtNode(elementById);
+  }
+}
+
 export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
 
@@ -182,17 +195,27 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
 
     eventBus.dispatch(event);
 
-    const elementById = document.getElementById(domId);
-    if (elementById === null) {
-      throw new Error(`Can't find interceptor root element with #${domId}`);
-    } else {
-      ReactDOM.unmountComponentAtNode(elementById);
-    }
+    unmount(domId);
 
     if (queue.length > 0) {
       render(domId, queue, respond);
     }
   }
+
+  // In case someone else in the network does the dispatching
+  eventBus.onDispatch((event) => {
+    const eventToRemove = queue.findIndex(
+      (e) => e.invocationUuid === event.invocationUuid
+    );
+    if (eventToRemove >= 0) {
+      queue.splice(eventToRemove, 1);
+      if (queue.length > 0) {
+        render(domId, queue, respond);
+      } else {
+        unmount(domId);
+      }
+    }
+  });
 
   eventBus.onCapture((event) => {
     queue.push(event);
