@@ -78,16 +78,7 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
             calling: true,
           },
           async () => {
-            const value = await this.props.callback(...args);
-            this.setState(
-              {
-                calling: false,
-                callCount: this.state.callCount + 1,
-              },
-              () => {
-                resolve(value);
-              }
-            );
+            resolve(await this.props.callback(...args));
           }
         );
       });
@@ -97,7 +88,14 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
       <>
         <div className="counter">{this.state.value}</div>
         <Button
-          onClick={() => this.props.onClick(cb, this.state.value)}
+          onClick={async () => {
+            const result = await this.props.onClick(cb, this.state.value);
+            this.setState({
+              calling: false,
+              callCount: this.state.callCount + 1,
+            });
+            return result;
+          }}
           onChange={(value) => {
             this.setState({ value });
           }}
