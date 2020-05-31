@@ -6,39 +6,42 @@ import {
 } from "./types";
 
 export class EventBus implements InterceptBus {
-  private captureHandlers: { [id: number]: InterceptHandler } = {};
-  private dispatchHandlers: { [id: number]: InterceptHandler } = {};
+  private eventHandlers: {
+    [id: number]: (event: InterceptEvent) => InterceptHandler;
+  } = {};
   private handlerCounter = 0;
-  private uuid: string;
+  private readonly uuid: string;
 
   constructor() {
     this.uuid = uuidv4();
   }
 
-  onDispatch(handler: InterceptHandler) {
+  onEvent(
+    handler: InterceptHandler,
+    filter: (event: InterceptEvent) => boolean = () => true
+  ) {
     const id = this.handlerCounter;
     this.handlerCounter++;
 
-    this.dispatchHandlers[id] = handler;
-    console.info(`EventBus.onDispatch() #${id}`);
+    this.eventHandlers[id] = (event) => (filter(event) ? handler : () => null);
+    console.info(`EventBus.onEvent() #${id}`);
 
     return () => {
-      console.info(`+ EventBus.onDispatch() deregister #${id}`);
-      return delete this.dispatchHandlers[id];
+      console.info(`+ EventBus.onEvent() deregister #${id}`);
+      return delete this.eventHandlers[id];
     };
   }
 
-  onCapture(handler: InterceptHandler) {
-    const id = this.handlerCounter;
+  onDispatch(handler: InterceptHandler) {
     this.handlerCounter++;
 
-    this.captureHandlers[id] = handler;
-    console.info(`EventBus.onCapture(): #${id}`);
+    return this.onEvent(handler, (event) => event.direction === "dispatch");
+  }
 
-    return () => {
-      console.info(`+ EventBus.onCapture() deregister #${id}`);
-      return delete this.captureHandlers[id];
-    };
+  onCapture(handler: InterceptHandler) {
+    this.handlerCounter++;
+
+    return this.onEvent(handler, (event) => event.direction === "capture");
   }
 
   capture(event: InterceptEvent): void {
@@ -51,9 +54,12 @@ export class EventBus implements InterceptBus {
       console.warn(`+ EventBus.capture dropping loopback message`);
       return;
     }
-    for (const [id, handler] of Object.entries(this.captureHandlers)) {
-      console.info(`+ EventBus.capture notify #${id}`);
-      handler({ ...event, sourceUuid: [this.uuid].concat(event.sourceUuid) });
+    for (const [id, getHandler] of Object.entries(this.eventHandlers)) {
+      const handler = getHandler(event);
+      if (handler !== null) {
+        console.info(`+ EventBus.capture notify #${id}`);
+        handler({ ...event, sourceUuid: [this.uuid].concat(event.sourceUuid) });
+      }
     }
   }
 
@@ -67,9 +73,27 @@ export class EventBus implements InterceptBus {
       console.warn(`+ EventBus.dispatch dropping loopback message`);
       return;
     }
-    for (const [id, handler] of Object.entries(this.dispatchHandlers)) {
-      console.info(`+ EventBus.dispatch notify #${id}`);
-      handler({ ...event, sourceUuid: [this.uuid].concat(event.sourceUuid) });
+    for (const [id, getHandler] of Object.entries(this.eventHandlers)) {
+      const handler = getHandler(event);
+      if (handler !== null) {
+        console.info(`+ EventBus.dispatch notify #${id}`);
+        handler({ ...event, sourceUuid: [this.uuid].concat(event.sourceUuid) });
+      }
+    }
+  }
+
+  event(event: InterceptEvent): void {
+    console.info("EventBus.event", arguments);
+    if (event.sourceUuid.includes(this.uuid)) {
+      console.warn(`+ EventBus.event dropping loopback message`);
+      return;
+    }
+    for (const [id, getHandler] of Object.entries(this.eventHandlers)) {
+      const handler = getHandler(event);
+      if (handler !== null) {
+        console.info(`+ EventBus.event notify #${id}`);
+        handler({ ...event, sourceUuid: [this.uuid].concat(event.sourceUuid) });
+      }
     }
   }
 }

@@ -43,8 +43,10 @@ export type InterceptHandler = (event: InterceptEvent) => void;
 export interface InterceptBus {
   capture: InterceptHandler;
   dispatch: InterceptHandler;
+  event: InterceptHandler;
   onCapture: (listener: InterceptHandler) => RemoveListener;
   onDispatch: (listener: InterceptHandler) => RemoveListener;
+  onEvent: (listener: InterceptHandler) => RemoveListener;
 }
 
 export type InterceptedFunction =

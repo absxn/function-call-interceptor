@@ -10,25 +10,16 @@ export function nodeWebSocketBridge(
       console.info("WebSocket send", data);
       ws.send(data);
     };
-    const removeCaptureListener = bus.onCapture(eventListener);
-    const removeDispatchListener = bus.onDispatch(eventListener);
+    const removeListener = bus.onEvent(eventListener);
 
     ws.on("message", function (msg) {
       console.info("WebSocket message", arguments);
-      const event: InterceptEvent = JSON.parse(msg as string);
-      if (event.direction === "capture") {
-        bus.capture(event);
-      } else if (event.direction === "dispatch") {
-        bus.dispatch(event);
-      } else {
-        console.error("Unexpected direction", event);
-      }
+      bus.event(JSON.parse(msg as string));
     });
 
     ws.on("close", function () {
       console.info("WebSocket close", arguments);
-      removeCaptureListener();
-      removeDispatchListener();
+      removeListener();
     });
   };
 }
