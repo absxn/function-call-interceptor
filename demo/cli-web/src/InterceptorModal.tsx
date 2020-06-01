@@ -79,10 +79,11 @@ export default class InterceptorModal extends React.Component<
                   uuid({uuidString}
                   {") "}
                   {e.trigger === Trigger.call ? (
-                    <code>call({JSON.stringify(e.args)}) => ?</code>
+                    <code>call({JSON.stringify(e.args)}) =&gt; ?</code>
                   ) : (
                     <code>
-                      return({JSON.stringify(e.args)}) => {JSON.stringify(e.rv)}
+                      return({JSON.stringify(e.args)}) =&gt;{" "}
+                      {JSON.stringify(e.rv)}
                     </code>
                   )}
                 </span>
@@ -99,12 +100,12 @@ export default class InterceptorModal extends React.Component<
               onChange={this.updateValue.bind(this)}
               value={this.state.editedData}
             />
-            <pre>) => ?</pre>
+            <pre>) =&gt; ?</pre>
           </>
         ) : (
           <>
             <h2>Return value</h2>
-            <pre>function({JSON.stringify(interceptEvent.args)}) =></pre>
+            <pre>function({JSON.stringify(interceptEvent.args)}) =&gt;</pre>
             <textarea
               className={cx("editor", { invalidJson: !validInput })}
               onChange={this.updateValue.bind(this)}
