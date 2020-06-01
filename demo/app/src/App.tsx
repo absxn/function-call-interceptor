@@ -138,7 +138,10 @@ class App extends React.Component<AppProps, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(browserEventBus, cb, "call")(1))
+              value +
+              (await intercept(browserEventBus, cb, "call", {
+                uuid: "square",
+              })(1))
             }
           >
             square(INTERCEPT(1)) => 1

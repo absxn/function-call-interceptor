@@ -2,6 +2,7 @@ import {
   InterceptBus,
   InterceptedFunction,
   InterceptEvent,
+  InterceptOptions,
   RemoveListener,
   Trigger,
   uuidv4,
@@ -35,8 +36,13 @@ function busEvents(bus: InterceptBus, invocationUuid: string) {
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
->(eventBus: InterceptBus, cb: C, trigger: Trigger): C {
-  const interceptorUuid = uuidv4();
+>(
+  eventBus: InterceptBus,
+  cb: C,
+  trigger: Trigger,
+  options: InterceptOptions = {}
+): C {
+  const interceptorUuid = options.uuid || uuidv4();
 
   return (
     async function () {

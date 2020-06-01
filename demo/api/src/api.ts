@@ -49,7 +49,8 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      "call"
+      "call",
+      { uuid: "apicall" }
     )(numbers)
   )
 );

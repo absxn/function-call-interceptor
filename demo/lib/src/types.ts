@@ -52,3 +52,7 @@ export interface InterceptBus {
 export type InterceptedFunction =
   | (() => Promise<any>)
   | ((...args: any[]) => Promise<any>);
+
+export interface InterceptOptions {
+  uuid?: string;
+}
