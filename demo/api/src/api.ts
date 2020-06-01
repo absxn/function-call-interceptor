@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
-import { intercept, EventBus } from "@interceptor/lib";
+import { intercept, EventBus, Trigger } from "@interceptor/lib";
 import { RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
 
@@ -49,7 +49,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      "call",
+      Trigger.call,
       { uuid: "apicall" }
     )(numbers)
   )
@@ -63,7 +63,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      "return"
+      Trigger.return
     )(numbers)
   )
 );
@@ -76,7 +76,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      "both"
+      Trigger.both
     )(numbers)
   )
 );
@@ -89,7 +89,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      "bypass"
+      Trigger.bypass
     )(numbers)
   )
 );

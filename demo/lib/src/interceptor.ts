@@ -58,7 +58,7 @@ export function intercept<
 
       // Call interceptor
       const interceptedArgs = await new Promise<A[]>((resolve) => {
-        if (trigger === "call" || trigger === "both") {
+        if (trigger === Trigger.call || trigger === Trigger.both) {
           console.info(
             `[${uuidString}] Intercepted call function(${originalArgs
               .map((a) => JSON.stringify(a))
@@ -73,7 +73,7 @@ export function intercept<
             interceptorUuid,
             invocationUuid,
             args: originalArgs,
-            trigger: "call",
+            trigger: Trigger.call,
             direction: "capture",
             sourceUuid: [],
           });
@@ -85,7 +85,7 @@ export function intercept<
       // Return interceptor
       return new Promise(async (resolve) => {
         // Bypass never calls the original code
-        const returnValue = await (trigger === "bypass"
+        const returnValue = await (trigger === Trigger.bypass
           ? Promise.resolve<any>("???") // <V> may be anything
           : (() => {
               console.info(
@@ -99,9 +99,9 @@ export function intercept<
             })());
 
         if (
-          trigger === "return" ||
-          trigger === "both" ||
-          trigger === "bypass"
+          trigger === Trigger.return ||
+          trigger === Trigger.both ||
+          trigger === Trigger.bypass
         ) {
           console.info(
             `[${uuidString}] Intercepted return value => ${JSON.stringify(
@@ -113,14 +113,14 @@ export function intercept<
             args: interceptedArgs,
             invocationUuid,
             rv: returnValue,
-            trigger: "return",
+            trigger: Trigger.return,
             interceptorUuid,
             direction: "capture",
             sourceUuid: [],
           });
 
           events.onDispatch((event) => {
-            if (event.trigger !== "return") {
+            if (event.trigger !== Trigger.return) {
               throw new Error(
                 `Expected return event, got ${JSON.stringify(event)}`
               );

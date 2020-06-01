@@ -2,7 +2,7 @@ import React, { ChangeEvent } from "react";
 import cx from "classnames";
 // import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
-import { InterceptBus, InterceptEvent } from "@interceptor/lib";
+import { InterceptBus, InterceptEvent, Trigger } from "@interceptor/lib";
 
 type EventQueue = Array<InterceptEvent>;
 
@@ -22,7 +22,9 @@ function loadData(queue: InterceptEvent[], index: number): string {
     throw new Error("Unexpected zero queue length");
   }
   const detail = queue[index];
-  return JSON.stringify(detail.trigger === "call" ? detail.args : detail.rv);
+  return JSON.stringify(
+    detail.trigger === Trigger.call ? detail.args : detail.rv
+  );
 }
 
 function isValidJsonString(jsonString: string) {
@@ -76,7 +78,7 @@ export default class InterceptorModal extends React.Component<
                 >
                   uuid({uuidString}
                   {") "}
-                  {e.trigger === "call" ? (
+                  {e.trigger === Trigger.call ? (
                     <code>call({JSON.stringify(e.args)}) => ?</code>
                   ) : (
                     <code>
@@ -88,7 +90,7 @@ export default class InterceptorModal extends React.Component<
             );
           })}
         </ol>
-        {interceptEvent.trigger === "call" ? (
+        {interceptEvent.trigger === Trigger.call ? (
           <>
             <h2>Arguments</h2>
             <pre>function(</pre>
@@ -129,7 +131,7 @@ export default class InterceptorModal extends React.Component<
             }
 
             const response =
-              interceptEvent.trigger === "call"
+              interceptEvent.trigger === Trigger.call
                 ? {
                     ...interceptEvent,
                     direction: "dispatch" as const,

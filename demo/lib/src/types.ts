@@ -16,25 +16,30 @@ export interface BaseEvent {
 
 // Bypass never calls the original code
 export interface BypassEvent extends BaseEvent {
-  trigger: "bypass";
+  trigger: Trigger.bypass;
   args?: any[];
   rv?: any;
 }
 
 export interface CallEvent extends BaseEvent {
-  trigger: "call";
+  trigger: Trigger.call;
   args?: any[];
 }
 
 export interface ReturnEvent extends BaseEvent {
-  trigger: "return";
+  trigger: Trigger.return;
   args?: any[];
   rv?: any;
 }
 
 export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
 
-export type Trigger = "bypass" | "call" | "return" | "both";
+export enum Trigger {
+  bypass = "bypass",
+  call = "call",
+  return = "return",
+  both = "both",
+}
 
 export type RemoveListener = () => void;
 
