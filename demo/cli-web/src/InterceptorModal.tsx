@@ -1,12 +1,8 @@
 import React, { ChangeEvent } from "react";
 import cx from "classnames";
-import "./InterceptorModal.css";
+// import "./InterceptorModal.css";
 import ReactDOM from "react-dom";
-import { InterceptBus, InterceptEvent } from "./types";
-import { browserWebSocketBridge } from "./browserWebSocketBridge";
-import { EventBus } from "./eventBus";
-
-export const browserEventBus = new EventBus();
+import { InterceptBus, InterceptEvent } from "@interceptor/lib";
 
 type EventQueue = Array<InterceptEvent>;
 
@@ -160,8 +156,6 @@ export default class InterceptorModal extends React.Component<
     this.setState({ editedData: event.currentTarget.value });
   }
 }
-
-browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 
 // https://stackoverflow.com/a/2117523
 function render(

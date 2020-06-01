@@ -1,4 +1,4 @@
-import { InterceptBus, InterceptEvent } from "../../app/src/types";
+import { InterceptBus, InterceptEvent } from "@interceptor/lib";
 import { WebsocketRequestHandler } from "express-ws";
 
 export function nodeWebSocketBridge(
@@ -11,6 +11,10 @@ export function nodeWebSocketBridge(
       ws.send(data);
     };
     const removeListener = bus.onEvent(eventListener);
+
+    ws.on("open", () => {
+      console.info("WebSocket open");
+    });
 
     ws.on("message", function (msg) {
       console.info("WebSocket message", arguments);

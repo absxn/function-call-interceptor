@@ -1,10 +1,9 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
-import { intercept } from "../../app/src/interceptor";
+import { intercept, EventBus } from "@interceptor/lib";
 import { RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
-import { EventBus } from "../../app/src/eventBus";
 
 const { app } = expressWs(require("express")());
 

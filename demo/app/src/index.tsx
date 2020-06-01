@@ -3,11 +3,19 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
-import { browserEventBus, mountInterceptorClient } from "./InterceptorModal";
+import {
+  browserWebSocketBridge,
+  mountInterceptorClient,
+} from "@interceptor/cli-web";
+import { EventBus } from "@interceptor/lib";
+
+const browserEventBus = new EventBus();
+
+browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <App bus={browserEventBus} />
   </React.StrictMode>,
   document.getElementById("root")
 );

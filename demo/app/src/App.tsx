@@ -1,8 +1,7 @@
 import React from "react";
 import "./App.css";
-import { intercept } from "./interceptor";
 import classNames from "classnames";
-import { browserEventBus } from "./InterceptorModal";
+import { EventBus, intercept } from "@interceptor/lib";
 
 interface AppState {}
 
@@ -112,8 +111,14 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
   }
 }
 
-class App extends React.Component<any, AppState> {
+interface AppProps {
+  bus: EventBus;
+}
+
+class App extends React.Component<AppProps, AppState> {
   render() {
+    const browserEventBus = this.props.bus;
+
     return (
       <div className="App">
         <h1>Interceptor</h1>

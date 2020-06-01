@@ -3,11 +3,15 @@
   "version": "0.0.1",
   "description": "",
   "main": "index.ts",
+  "private": true,
   "scripts": {
     "format": "prettier --write \"**/*.{ts,css,tsx,json,md}\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently --names \"APP,API\" -c \"bgBlue.bold,bgMagenta.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && npm start)\""
+    "start": "concurrently --names \"APP,API,LIB,CLI\" -c \"bgBlue.bold,bgMagenta.bold,bgRed.bold,bgYellow.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && yarn start)\" \"(cd demo/lib && yarn watch)\" \"(cd demo/cli-web && yarn watch)\""
   },
+  "workspaces": [
+    "demo/*"
+  ],
   "author": "Teijo Laine",
   "license": "ISC",
   "devDependencies": {

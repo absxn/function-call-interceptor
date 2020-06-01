@@ -1,0 +1,17 @@
+{
+  "name": "@interceptor/lib",
+  "version": "0.1.0",
+  "private": true,
+  "main": "BUILD/index.js",
+  "types": "BUILD/index.d.ts",
+  "files": [
+    "BUILD"
+  ],
+  "dependencies": {
+    "typescript": "~3.7.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  }
+}
