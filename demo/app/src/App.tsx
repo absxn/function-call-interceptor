@@ -132,7 +132,7 @@ class App extends React.Component<AppProps, AppState> {
             callback={this.square}
             onClick={async (cb, value) => value + (await cb(1))}
           >
-            square(1) => 1
+            square(1) =&gt; 1
           </Demo>
           <Demo
             value={0}
@@ -144,7 +144,7 @@ class App extends React.Component<AppProps, AppState> {
               })(1))
             }
           >
-            square(INTERCEPT(1)) => 1
+            square(INTERCEPT(1)) =&gt; 1
           </Demo>
           <Demo
             value={0}
@@ -153,7 +153,7 @@ class App extends React.Component<AppProps, AppState> {
               value + (await intercept(browserEventBus, cb, Trigger.return)(2))
             }
           >
-            square(2) => INTERCEPT(4)
+            square(2) =&gt; INTERCEPT(4)
           </Demo>
           <Demo
             value={0}
@@ -162,7 +162,7 @@ class App extends React.Component<AppProps, AppState> {
               value + (await intercept(browserEventBus, cb, Trigger.both)(3))
             }
           >
-            square(INTERCEPT(3)) => INTERCEPT(9)
+            square(INTERCEPT(3)) =&gt; INTERCEPT(9)
           </Demo>
           <Demo
             value={0}
@@ -171,7 +171,7 @@ class App extends React.Component<AppProps, AppState> {
               value + (await intercept(browserEventBus, cb, Trigger.bypass)(4))
             }
           >
-            INTERCEPT(square(4)) => ???
+            INTERCEPT(square(4)) =&gt; ???
           </Demo>
         </div>
         <h2>Multiple arguments</h2>
@@ -184,7 +184,7 @@ class App extends React.Component<AppProps, AppState> {
             value={""}
             onClick={(cb, value) => cb(value, "x", "y")}
           >
-            concat("", "x", "y") => "xy"
+            concat("", "x", "y") =&gt; "xy"
           </Demo>
           <Demo
             callback={this.concat}
@@ -193,7 +193,7 @@ class App extends React.Component<AppProps, AppState> {
               intercept(browserEventBus, cb, Trigger.call)(value, "x", "y")
             }
           >
-            concat(INTERCEPT("", "x", "y")) => "xy"
+            concat(INTERCEPT("", "x", "y")) =&gt; "xy"
           </Demo>
         </div>
         <h2>API call</h2>
@@ -206,28 +206,28 @@ class App extends React.Component<AppProps, AppState> {
             value={0}
             onClick={async (cb, value) => value + (await cb(1, 2, 3))}
           >
-            fetch("/sum", INTERCEPT([1,2,3])) => 6
+            fetch("/sum", INTERCEPT([1,2,3])) =&gt; 6
           </Demo>
           <Demo
             callback={this.apiSum("return")}
             value={0}
             onClick={async (cb, value) => value + (await cb(1, 2, 3))}
           >
-            fetch("/sum", [1,2,3]) => INTERCEPT(6)
+            fetch("/sum", [1,2,3]) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
             callback={this.apiSum("both")}
             value={0}
             onClick={async (cb, value) => value + (await cb(1, 2, 3))}
           >
-            fetch("/sum", INTERCEPT([1,2,3])) => INTERCEPT(6)
+            fetch("/sum", INTERCEPT([1,2,3])) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
             callback={this.apiSum("bypass")}
             value={0}
             onClick={async (cb, value) => value + (await cb(1, 2, 3))}
           >
-            fetch("/sum", INTERCEPT([1,2,3])) => ???
+            fetch("/sum", INTERCEPT([1,2,3])) =&gt; ???
           </Demo>
         </div>
       </div>
