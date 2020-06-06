@@ -49,8 +49,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      Trigger.call,
-      { uuid: "apicall" }
+      { uuid: "apicall", trigger: Trigger.call }
     )(numbers)
   )
 );
@@ -63,7 +62,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      Trigger.return
+      { trigger: Trigger.return }
     )(numbers)
   )
 );
@@ -76,7 +75,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      Trigger.both
+      { trigger: Trigger.both }
     )(numbers)
   )
 );
@@ -89,7 +88,7 @@ app.post(
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
-      Trigger.bypass
+      { trigger: Trigger.bypass }
     )(numbers)
   )
 );

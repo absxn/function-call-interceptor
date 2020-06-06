@@ -59,5 +59,6 @@ export type InterceptedFunction =
   | ((...args: any[]) => Promise<any>);
 
 export interface InterceptOptions {
+  trigger: Trigger;
   uuid?: string;
 }

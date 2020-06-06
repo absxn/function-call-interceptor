@@ -36,13 +36,9 @@ function busEvents(bus: InterceptBus, invocationUuid: string) {
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
->(
-  eventBus: InterceptBus,
-  cb: C,
-  trigger: Trigger,
-  options: InterceptOptions = {}
-): C {
+>(eventBus: InterceptBus, cb: C, options: InterceptOptions): C {
   const interceptorUuid = options.uuid || uuidv4();
+  const trigger = options.trigger;
 
   return (
     async function () {

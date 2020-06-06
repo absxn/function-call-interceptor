@@ -145,7 +145,8 @@ class App extends React.Component<AppProps, AppState> {
             callback={this.square}
             onClick={async (cb, value) =>
               value +
-              (await intercept(browserEventBus, cb, Trigger.call, {
+              (await intercept(browserEventBus, cb, {
+                trigger: Trigger.call,
                 uuid: "square",
               })(1))
             }
@@ -156,7 +157,10 @@ class App extends React.Component<AppProps, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(browserEventBus, cb, Trigger.return)(2))
+              value +
+              (await intercept(browserEventBus, cb, {
+                trigger: Trigger.return,
+              })(2))
             }
           >
             square(2) =&gt; INTERCEPT(4)
@@ -165,7 +169,10 @@ class App extends React.Component<AppProps, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(browserEventBus, cb, Trigger.both)(3))
+              value +
+              (await intercept(browserEventBus, cb, { trigger: Trigger.both })(
+                3
+              ))
             }
           >
             square(INTERCEPT(3)) =&gt; INTERCEPT(9)
@@ -174,7 +181,10 @@ class App extends React.Component<AppProps, AppState> {
             value={0}
             callback={this.square}
             onClick={async (cb, value) =>
-              value + (await intercept(browserEventBus, cb, Trigger.bypass)(4))
+              value +
+              (await intercept(browserEventBus, cb, {
+                trigger: Trigger.bypass,
+              })(4))
             }
           >
             INTERCEPT(square(4)) =&gt; ???
@@ -196,7 +206,11 @@ class App extends React.Component<AppProps, AppState> {
             callback={this.concat}
             value={""}
             onClick={(cb, value) =>
-              intercept(browserEventBus, cb, Trigger.call)(value, "x", "y")
+              intercept(browserEventBus, cb, { trigger: Trigger.call })(
+                value,
+                "x",
+                "y"
+              )
             }
           >
             concat(INTERCEPT("", "x", "y")) =&gt; "xy"
