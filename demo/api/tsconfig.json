@@ -5,6 +5,7 @@
     "types": ["node"],
     "lib": ["es6", "es2017", "dom"],
     "moduleResolution": "node",
+    "target": "es6",
     "sourceMap": true
   },
   "include": ["./src/**/*"]

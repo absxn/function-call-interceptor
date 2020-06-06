@@ -5,7 +5,7 @@
     "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "esnext",
+    "target": "es6",
     "declaration": true,
     "esModuleInterop": true,
     "jsx": "react"

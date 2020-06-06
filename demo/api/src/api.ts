@@ -10,7 +10,7 @@ const { app } = expressWs(require("express")());
 app.use(cors());
 app.use(bodyParser.json());
 
-export const eventBus = new EventBus();
+export const eventBus = new EventBus({ uuid: "api" });
 
 app.ws("/ws", nodeWebSocketBridge(eventBus));
 

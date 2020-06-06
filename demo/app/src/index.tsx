@@ -9,7 +9,7 @@ import {
 } from "@interceptor/cli-web";
 import { EventBus } from "@interceptor/lib";
 
-const browserEventBus = new EventBus();
+const browserEventBus = new EventBus({ uuid: "app" });
 
 browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 

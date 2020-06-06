@@ -12,8 +12,8 @@ export class EventBus implements InterceptBus {
   private handlerCounter = 0;
   private readonly uuid: string;
 
-  constructor() {
-    this.uuid = uuidv4();
+  constructor(options?: { uuid?: string }) {
+    this.uuid = options?.uuid || uuidv4();
   }
 
   onEvent(
