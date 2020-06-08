@@ -148,6 +148,8 @@ class App extends React.Component<AppProps, AppState> {
               (await intercept(browserEventBus, cb, {
                 trigger: Trigger.call,
                 uuid: "square",
+                dispatchOptionsArguments: [[9, 8, 7]],
+                dispatchOptionOverride: false,
               })(1))
             }
           >

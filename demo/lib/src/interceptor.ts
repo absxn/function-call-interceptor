@@ -36,9 +36,14 @@ function busEvents(bus: InterceptBus, invocationUuid: string) {
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>
->(eventBus: InterceptBus, cb: C, options: InterceptOptions): C {
+>(eventBus: InterceptBus, cb: C, options: InterceptOptions<C>): C {
   const interceptorUuid = options.uuid || uuidv4();
   const trigger = options.trigger;
+  const {
+    dispatchOptionsArguments,
+    dispatchOptionsReturnValue,
+    dispatchOptionOverride,
+  } = options;
 
   return (
     async function () {
@@ -72,6 +77,8 @@ export function intercept<
             trigger: Trigger.call,
             direction: "capture",
             sourceUuid: [],
+            dispatchOptionOverride,
+            dispatchOptionsArguments,
           });
         } else {
           resolve(originalArgs);
@@ -113,6 +120,8 @@ export function intercept<
             interceptorUuid,
             direction: "capture",
             sourceUuid: [],
+            dispatchOptionOverride,
+            dispatchOptionsReturnValue,
           });
 
           events.onDispatch((event) => {

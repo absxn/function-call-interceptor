@@ -51,6 +51,15 @@ export default class InterceptorModal extends React.Component<
     const interceptEvent = queue[this.state.activeEvent];
     const validInput = isValidJsonString(this.state.editedData);
     const originalData = loadData(queue, this.state.activeEvent);
+    const notEditable =
+      interceptEvent.dispatchOptionOverride === false &&
+      !(interceptEvent.trigger === Trigger.call
+        ? interceptEvent.dispatchOptionsArguments || []
+        : interceptEvent.dispatchOptionsReturnValue || []
+      )
+        .map((j) => JSON.stringify(j))
+        .concat([originalData])
+        .includes(this.state.editedData);
     return (
       <fieldset
         className={cx("interceptorModal", { disabled: !this.props.visible })}
@@ -94,6 +103,19 @@ export default class InterceptorModal extends React.Component<
         {interceptEvent.trigger === Trigger.call ? (
           <>
             <h2>Arguments</h2>
+            <h3>Suggested arguments</h3>
+            <select onChange={this.updateValue.bind(this)}>
+              <option value={originalData}>{originalData} (input)</option>
+              {interceptEvent.dispatchOptionsArguments.map((args, index) => {
+                const value = JSON.stringify(args);
+                return (
+                  <option key={index} value={value}>
+                    {value}
+                  </option>
+                );
+              })}
+            </select>
+            <h3>Arguments to dispatch</h3>
             <pre>function(</pre>
             <textarea
               className={cx("editor", { invalidJson: !validInput })}
@@ -124,7 +146,7 @@ export default class InterceptorModal extends React.Component<
           Reset
         </button>
         <button
-          disabled={!validInput}
+          disabled={!validInput || notEditable}
           onClick={() => {
             const editedData = this.state.editedData;
             if (editedData === null || editedData === undefined) {
@@ -150,12 +172,13 @@ export default class InterceptorModal extends React.Component<
           }}
         >
           Dispatch{!validInput && " (malformed JSON input)"}
+          {notEditable && " (custom input not accepted)"}
         </button>
       </fieldset>
     );
   }
 
-  updateValue(event: ChangeEvent<HTMLTextAreaElement>) {
+  updateValue(event: ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) {
     this.setState({ editedData: event.currentTarget.value });
   }
 }

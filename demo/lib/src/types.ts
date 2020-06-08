@@ -9,6 +9,7 @@ export function uuidv4() {
 
 export interface BaseEvent {
   direction: "capture" | "dispatch";
+  dispatchOptionOverride?: boolean;
   interceptorUuid: string;
   invocationUuid: string;
   sourceUuid: string[];
@@ -19,17 +20,20 @@ export interface BypassEvent extends BaseEvent {
   trigger: Trigger.bypass;
   args?: any[];
   rv?: any;
+  dispatchOptionsReturnValue?: any[];
 }
 
 export interface CallEvent extends BaseEvent {
   trigger: Trigger.call;
   args?: any[];
+  dispatchOptionsArguments?: any[];
 }
 
 export interface ReturnEvent extends BaseEvent {
   trigger: Trigger.return;
   args?: any[];
   rv?: any;
+  dispatchOptionsReturnValue?: any[];
 }
 
 export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
@@ -58,7 +62,10 @@ export type InterceptedFunction =
   | (() => Promise<any>)
   | ((...args: any[]) => Promise<any>);
 
-export interface InterceptOptions {
+export interface InterceptOptions<C extends InterceptedFunction> {
   trigger: Trigger;
   uuid?: string;
+  dispatchOptionsArguments?: Parameters<C>[];
+  dispatchOptionsReturnValue?: ReturnType<C>[];
+  dispatchOptionOverride?: boolean;
 }
