@@ -174,6 +174,16 @@ export default class InterceptorModal extends React.Component<
           Dispatch{!validInput && " (malformed JSON input)"}
           {notEditable && " (custom input not accepted)"}
         </button>
+        <h3>Raw event</h3>
+        <div
+          style={{
+            fontFamily: "monospace",
+            whiteSpace: "pre",
+            fontSize: "10px",
+          }}
+        >
+          {JSON.stringify(interceptEvent, null, 2)}
+        </div>
       </fieldset>
     );
   }
