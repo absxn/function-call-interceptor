@@ -106,14 +106,16 @@ export default class InterceptorModal extends React.Component<
             <h3>Suggested arguments</h3>
             <select onChange={this.updateValue.bind(this)}>
               <option value={originalData}>{originalData} (input)</option>
-              {interceptEvent.dispatchOptionsArguments.map((args, index) => {
-                const value = JSON.stringify(args);
-                return (
-                  <option key={index} value={value}>
-                    {value}
-                  </option>
-                );
-              })}
+              {(interceptEvent.dispatchOptionsArguments || []).map(
+                (args, index) => {
+                  const value = JSON.stringify(args);
+                  return (
+                    <option key={index} value={value}>
+                      {value}
+                    </option>
+                  );
+                }
+              )}
             </select>
             <h3>Arguments to dispatch</h3>
             <pre>function(</pre>
