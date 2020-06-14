@@ -9,6 +9,10 @@ import {
 import { EventBus, intercept, Trigger } from "@interceptor/lib";
 import classNames from "classnames";
 
+type DemoResponse<T> =
+  | { success: true; value: T }
+  | { success: false; message: string };
+
 interface AppState {}
 
 interface ButtonState {
@@ -57,13 +61,15 @@ class Button<T> extends React.Component<ButtonProps<T>, ButtonState> {
 }
 
 interface DemoProps<T, A extends any> {
-  onClick: (callback: (...value: A[]) => Promise<T>, value: T) => Promise<T>;
-  callback: (...value: A[]) => Promise<T>;
-  value: T;
+  value: DemoResponse<T>;
+  onClick: (
+    callback: (...value: A[]) => Promise<DemoResponse<T>>
+  ) => Promise<DemoResponse<T>>;
+  callback: (...value: A[]) => Promise<DemoResponse<T>>;
 }
 
 interface DemoState<T> {
-  value: T;
+  value: DemoResponse<T | null>;
   calling: boolean;
   callCount: number;
 }
@@ -77,7 +83,7 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
 
   render() {
     const cb = (...args: A[]) => {
-      return new Promise<T>((resolve) => {
+      return new Promise<DemoResponse<T>>((resolve) => {
         this.setState(
           {
             calling: true,
@@ -89,12 +95,15 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
       });
     };
 
+    const value = this.state.value;
     return (
       <>
-        <div className="counter">{this.state.value}</div>
+        <div className={classNames("counter", { error: !value.success })}>
+          {value.success === true ? value.value : `ERROR: ${value.message}`}
+        </div>
         <Button
           onClick={async () => {
-            const result = await this.props.onClick(cb, this.state.value);
+            const result = await this.props.onClick(cb);
             this.setState({
               calling: false,
               callCount: this.state.callCount + 1,
@@ -134,59 +143,53 @@ class App extends React.Component<AppProps, AppState> {
           <h3>Trigger</h3>
           <h3>Job</h3>
           <Demo
-            value={0}
+            value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb, value) => value + (await cb(1))}
+            onClick={(cb) => cb(1)}
           >
             square(1) =&gt; 1
           </Demo>
           <Demo
-            value={0}
+            value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb, value) =>
-              value +
-              (await intercept(browserEventBus, cb, {
+            onClick={async (cb) =>
+              await intercept(browserEventBus, cb, {
                 trigger: Trigger.call,
                 uuid: "square",
                 dispatchOptionsArguments: [[9, 8, 7]],
                 dispatchOptionOverride: false,
-              })(1))
+              })(1)
             }
           >
             square(INTERCEPT(1)) =&gt; 1
           </Demo>
           <Demo
-            value={0}
+            value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb, value) =>
-              value +
-              (await intercept(browserEventBus, cb, {
+            onClick={async (cb) =>
+              await intercept(browserEventBus, cb, {
                 trigger: Trigger.return,
-              })(2))
+              })(2)
             }
           >
             square(2) =&gt; INTERCEPT(4)
           </Demo>
           <Demo
-            value={0}
+            value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb, value) =>
-              value +
-              (await intercept(browserEventBus, cb, { trigger: Trigger.both })(
-                3
-              ))
+            onClick={async (cb) =>
+              await intercept(browserEventBus, cb, { trigger: Trigger.both })(3)
             }
           >
             square(INTERCEPT(3)) =&gt; INTERCEPT(9)
           </Demo>
           <Demo
-            value={0}
+            value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb, value) =>
-              value +
-              (await intercept(browserEventBus, cb, {
+            onClick={async (cb) =>
+              await intercept(browserEventBus, cb, {
                 trigger: Trigger.bypass,
-              })(4))
+              })(4)
             }
           >
             INTERCEPT(square(4)) =&gt; ???
@@ -198,18 +201,17 @@ class App extends React.Component<AppProps, AppState> {
           <h3>Trigger</h3>
           <h3>Job</h3>
           <Demo
+            value={{ success: true, value: "" }}
             callback={this.concat}
-            value={""}
-            onClick={(cb, value) => cb(value, "x", "y")}
+            onClick={(cb) => cb("x", "y")}
           >
             concat("", "x", "y") =&gt; "xy"
           </Demo>
           <Demo
+            value={{ success: true, value: "" }}
             callback={this.concat}
-            value={""}
-            onClick={(cb, value) =>
+            onClick={(cb) =>
               intercept(browserEventBus, cb, { trigger: Trigger.call })(
-                value,
                 "x",
                 "y"
               )
@@ -224,30 +226,30 @@ class App extends React.Component<AppProps, AppState> {
           <h3>Trigger</h3>
           <h3>Job</h3>
           <Demo
+            value={{ success: true, value: 0 }}
             callback={this.apiSum("call")}
-            value={0}
-            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+            onClick={async (cb) => await cb(1, 2, 3)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; 6
           </Demo>
           <Demo
+            value={{ success: true, value: 0 }}
             callback={this.apiSum("return")}
-            value={0}
-            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+            onClick={async (cb) => await cb(1, 2, 3)}
           >
             fetch("/sum", [1,2,3]) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
+            value={{ success: true, value: 0 }}
             callback={this.apiSum("both")}
-            value={0}
-            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+            onClick={async (cb) => await cb(1, 2, 3)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
+            value={{ success: true, value: 0 }}
             callback={this.apiSum("bypass")}
-            value={0}
-            onClick={async (cb, value) => value + (await cb(1, 2, 3))}
+            onClick={async (cb) => await cb(1, 2, 3)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; ???
           </Demo>
@@ -257,7 +259,7 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   apiSum(path: "call" | "return" | "both" | "bypass") {
-    return (...numbers: number[]): Promise<number> => {
+    return (...numbers: number[]): Promise<DemoResponse<number>> => {
       return fetch(`http://localhost:3001/interceptor-demo/${path}`, {
         method: "POST",
         headers: {
@@ -268,19 +270,23 @@ class App extends React.Component<AppProps, AppState> {
         .then((response: any) => {
           return response.json();
         })
-        .then((body: { sum: number }) => body.sum);
+        .then((body: { sum: number }) => ({ success: true, value: body.sum }));
     };
   }
 
-  square(value: number): Promise<number> {
+  square(value: number): Promise<DemoResponse<number>> {
     return new Promise((resolve) => {
-      setTimeout(() => resolve(value * value), 500);
+      setTimeout(() => resolve({ success: true, value: value * value }), 500);
     });
   }
 
-  concat(base: string, ...strings: string[]): Promise<string> {
+  concat(base: string, ...strings: string[]): Promise<DemoResponse<string>> {
     return new Promise((resolve) => {
-      setTimeout(() => resolve([base].concat(strings).join("")), 500);
+      setTimeout(
+        () =>
+          resolve({ success: true, value: [base].concat(strings).join("") }),
+        500
+      );
     });
   }
 }
