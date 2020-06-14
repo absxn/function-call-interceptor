@@ -8,7 +8,7 @@
     "BUILD"
   ],
   "dependencies": {
-    "typescript": "~3.9.3"
+    "typescript": "~3.9.5"
   },
   "scripts": {
     "build": "tsc",

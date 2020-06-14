@@ -45,103 +45,101 @@ export function intercept<
     dispatchOptionOverride,
   } = options;
 
-  return (
-    async function () {
-      const invocationUuid = uuidv4();
+  return async function () {
+    const invocationUuid = uuidv4();
 
-      const events = busEvents(eventBus, invocationUuid);
+    const events = busEvents(eventBus, invocationUuid);
 
-      const originalArgs = Array.from(arguments);
+    const originalArgs = Array.from(arguments);
 
-      const uuidString = `${interceptorUuid.split("-")[0]}.${
-        invocationUuid.split("-")[0]
-      }`;
+    const uuidString = `${interceptorUuid.split("-")[0]}.${
+      invocationUuid.split("-")[0]
+    }`;
 
-      // Call interceptor
-      const interceptedArgs = await new Promise<A[]>((resolve) => {
-        if (trigger === Trigger.call || trigger === Trigger.both) {
-          console.info(
-            `[${uuidString}] Intercepted call function(${originalArgs
-              .map((a) => JSON.stringify(a))
-              .join(", ")}) => ?`
-          );
-
-          events.onDispatch((callEvent) => {
-            resolve(callEvent.args);
-          });
-
-          events.capture({
-            interceptorUuid,
-            invocationUuid,
-            args: originalArgs,
-            trigger: Trigger.call,
-            direction: "capture",
-            sourceUuid: [],
-            dispatchOptionOverride,
-            dispatchOptionsArguments,
-          });
-        } else {
-          resolve(originalArgs);
-        }
-      });
-
-      // Return interceptor
-      return new Promise(async (resolve) => {
-        // Bypass never calls the original code
-        const returnValue = await (trigger === Trigger.bypass
-          ? Promise.resolve<any>("???") // <V> may be anything
-          : (() => {
-              console.info(
-                `[${uuidString}] Calling function(${originalArgs
-                  .map((a) => JSON.stringify(a))
-                  .join(", ")}) => ?`
-              );
-              return interceptedArgs.length === 0
-                ? cb()
-                : cb(...(interceptedArgs as A[]));
-            })());
-
-        if (
-          trigger === Trigger.return ||
-          trigger === Trigger.both ||
-          trigger === Trigger.bypass
-        ) {
-          console.info(
-            `[${uuidString}] Intercepted return value => ${JSON.stringify(
-              returnValue
-            )}`
-          );
-
-          events.capture({
-            args: interceptedArgs,
-            invocationUuid,
-            rv: returnValue,
-            trigger: Trigger.return,
-            interceptorUuid,
-            direction: "capture",
-            sourceUuid: [],
-            dispatchOptionOverride,
-            dispatchOptionsReturnValue,
-          });
-
-          events.onDispatch((event) => {
-            if (event.trigger !== Trigger.return) {
-              throw new Error(
-                `Expected return event, got ${JSON.stringify(event)}`
-              );
-            }
-            resolve(event.rv);
-          });
-        } else {
-          resolve(returnValue);
-        }
-      }).then((returnValue) => {
+    // Call interceptor
+    const interceptedArgs = await new Promise<A[]>((resolve) => {
+      if (trigger === Trigger.call || trigger === Trigger.both) {
         console.info(
-          `[${uuidString}] Returning => ${JSON.stringify(returnValue)}`
+          `[${uuidString}] Intercepted call function(${originalArgs
+            .map((a) => JSON.stringify(a))
+            .join(", ")}) => ?`
         );
 
-        return returnValue;
-      });
-    } as C
-  );
+        events.onDispatch((callEvent) => {
+          resolve(callEvent.args);
+        });
+
+        events.capture({
+          interceptorUuid,
+          invocationUuid,
+          args: originalArgs,
+          trigger: Trigger.call,
+          direction: "capture",
+          sourceUuid: [],
+          dispatchOptionOverride,
+          dispatchOptionsArguments,
+        });
+      } else {
+        resolve(originalArgs);
+      }
+    });
+
+    // Return interceptor
+    return new Promise(async (resolve) => {
+      // Bypass never calls the original code
+      const returnValue = await (trigger === Trigger.bypass
+        ? Promise.resolve<any>("???") // <V> may be anything
+        : (() => {
+            console.info(
+              `[${uuidString}] Calling function(${originalArgs
+                .map((a) => JSON.stringify(a))
+                .join(", ")}) => ?`
+            );
+            return interceptedArgs.length === 0
+              ? cb()
+              : cb(...(interceptedArgs as A[]));
+          })());
+
+      if (
+        trigger === Trigger.return ||
+        trigger === Trigger.both ||
+        trigger === Trigger.bypass
+      ) {
+        console.info(
+          `[${uuidString}] Intercepted return value => ${JSON.stringify(
+            returnValue
+          )}`
+        );
+
+        events.capture({
+          args: interceptedArgs,
+          invocationUuid,
+          rv: returnValue,
+          trigger: Trigger.return,
+          interceptorUuid,
+          direction: "capture",
+          sourceUuid: [],
+          dispatchOptionOverride,
+          dispatchOptionsReturnValue,
+        });
+
+        events.onDispatch((event) => {
+          if (event.trigger !== Trigger.return) {
+            throw new Error(
+              `Expected return event, got ${JSON.stringify(event)}`
+            );
+          }
+          resolve(event.rv);
+        });
+      } else {
+        resolve(returnValue);
+      }
+    }).then((returnValue) => {
+      console.info(
+        `[${uuidString}] Returning => ${JSON.stringify(returnValue)}`
+      );
+
+      return returnValue;
+    });
+  } as C;
 }
