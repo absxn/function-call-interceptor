@@ -169,6 +169,10 @@ class App extends React.Component<AppProps, AppState> {
             onClick={async (cb) =>
               await intercept(browserEventBus, cb, {
                 trigger: Trigger.return,
+                dispatchOptionsReturnValue: [
+                  { success: false, message: "Error" },
+                ],
+                dispatchOptionOverride: true,
               })(2)
             }
           >

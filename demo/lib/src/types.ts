@@ -62,10 +62,12 @@ export type InterceptedFunction =
   | (() => Promise<any>)
   | ((...args: any[]) => Promise<any>);
 
+type UnwrapPromise<T> = T extends PromiseLike<infer U> ? U : never;
+
 export interface InterceptOptions<C extends InterceptedFunction> {
   trigger: Trigger;
   uuid?: string;
   dispatchOptionsArguments?: Parameters<C>[];
-  dispatchOptionsReturnValue?: ReturnType<C>[];
+  dispatchOptionsReturnValue?: UnwrapPromise<ReturnType<C>>[];
   dispatchOptionOverride?: boolean;
 }
