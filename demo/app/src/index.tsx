@@ -6,7 +6,7 @@ import {
   browserWebSocketBridge,
   mountInterceptorClient,
 } from "@interceptor/cli-web";
-import { EventBus, intercept, Trigger } from "@interceptor/lib";
+import { EventBus, Interceptor, Trigger } from "@interceptor/lib";
 import classNames from "classnames";
 
 function isValidJsonString(jsonString: string) {
@@ -185,7 +185,14 @@ const Heading = () => (
 
 class App extends React.Component<AppProps, AppState> {
   render() {
-    const browserEventBus = this.props.bus;
+    const intercept = this.props.bus.getInterceptor();
+
+    const partialSquare = intercept(this.square, {
+      trigger: Trigger.call,
+      uuid: "square",
+      dispatchOptionsArguments: [[2], [3], [4]],
+      dispatchOptionOverride: false,
+    });
 
     return (
       <div className="App">
@@ -203,15 +210,8 @@ class App extends React.Component<AppProps, AppState> {
           <Demo
             defaultInput={[1]}
             value={{ success: true, value: 0 }}
-            callback={this.square}
-            onClick={async (cb, value) =>
-              await intercept(browserEventBus, cb, {
-                trigger: Trigger.call,
-                uuid: "square",
-                dispatchOptionsArguments: [[9, 8, 7]],
-                dispatchOptionOverride: false,
-              })(...value)
-            }
+            callback={partialSquare}
+            onClick={(cb, value) => cb(...value)}
             label={(input) => `square(INTERCEPT(${input.join(",")})) => number`}
           />
           <Demo
@@ -219,7 +219,7 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: 0 }}
             callback={this.square}
             onClick={async (cb, value) =>
-              await intercept(browserEventBus, cb, {
+              await intercept(cb, {
                 trigger: Trigger.return,
                 dispatchOptionsReturnValue: [
                   { success: false, message: "Error" },
@@ -234,9 +234,7 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: 0 }}
             callback={this.square}
             onClick={async (cb, value) =>
-              await intercept(browserEventBus, cb, { trigger: Trigger.both })(
-                ...value
-              )
+              await intercept(cb, { trigger: Trigger.both })(...value)
             }
             label={(input) =>
               `square(INTERCEPT(${input.join(",")})) => INTERCEPT(number)`
@@ -247,7 +245,7 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: 0 }}
             callback={this.square}
             onClick={async (cb, value) =>
-              await intercept(browserEventBus, cb, {
+              await intercept(cb, {
                 trigger: Trigger.bypass,
               })(...value)
             }
@@ -269,9 +267,7 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: "" }}
             callback={this.concat}
             onClick={(cb, value) =>
-              intercept(browserEventBus, cb, { trigger: Trigger.call })(
-                ...value
-              )
+              intercept(cb, { trigger: Trigger.call })(...value)
             }
             label={(input) => `concat(INTERCEPT(${input.join(",")})) => string`}
           />

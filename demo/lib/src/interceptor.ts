@@ -33,6 +33,11 @@ function busEvents(bus: InterceptBus, invocationUuid: string) {
   };
 }
 
+export type Interceptor<
+  C extends InterceptedFunction,
+  A extends Parameters<C>
+> = (cb: C, options: InterceptOptions<C>) => C;
+
 export function intercept<
   C extends InterceptedFunction,
   A extends Parameters<C>

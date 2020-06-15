@@ -1,6 +1,6 @@
-import { intercept } from "./interceptor";
+import { Interceptor, intercept } from "./interceptor";
 import { EventBus } from "./eventBus";
 
-export { intercept, EventBus };
+export { intercept, Interceptor, EventBus };
 
 export * from "./types";

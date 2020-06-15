@@ -1,9 +1,12 @@
 import {
   InterceptBus,
+  InterceptedFunction,
   InterceptEvent,
   InterceptHandler,
+  InterceptOptions,
   uuidv4,
 } from "./types";
+import { intercept } from "./interceptor";
 
 export class EventBus implements InterceptBus {
   private eventHandlers: {
@@ -14,6 +17,15 @@ export class EventBus implements InterceptBus {
 
   constructor(options?: { uuid?: string }) {
     this.uuid = options?.uuid || uuidv4();
+  }
+
+  getInterceptor() {
+    return <C extends InterceptedFunction, A extends Parameters<C>>(
+      cb: C,
+      options: InterceptOptions<C>
+    ): C => {
+      return intercept(this, cb, options);
+    };
   }
 
   onEvent(
