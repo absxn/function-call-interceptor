@@ -78,6 +78,7 @@ interface DemoProps<T, A extends any> {
   ) => Promise<DemoResponse<T>>;
   callback: (...value: A[]) => Promise<DemoResponse<T>>;
   defaultInput: A[];
+  label: (intput: A[]) => string;
 }
 
 interface DemoState<T> {
@@ -150,7 +151,11 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
             this.setState({ output });
           }}
         >
-          {this.props.children}
+          {this.props.label
+            ? this.state.isValidInput
+              ? this.props.label(JSON.parse(this.state.input))
+              : "Broken input"
+            : this.props.children}
         </Button>
         <div className={classNames("status", { active: this.state.calling })}>
           {this.state.calling
@@ -193,9 +198,8 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: 0 }}
             callback={this.square}
             onClick={(cb, value) => cb(...value)}
-          >
-            square(1) =&gt; 1
-          </Demo>
+            label={(input) => `square(INTERCEPT(${input.join(",")})) => number`}
+          />
           <Demo
             defaultInput={[1]}
             value={{ success: true, value: 0 }}
@@ -208,9 +212,8 @@ class App extends React.Component<AppProps, AppState> {
                 dispatchOptionOverride: false,
               })(...value)
             }
-          >
-            square(INTERCEPT(1)) =&gt; 1
-          </Demo>
+            label={(input) => `square(INTERCEPT(${input.join(",")})) => number`}
+          />
           <Demo
             defaultInput={[2]}
             value={{ success: true, value: 0 }}
@@ -224,9 +227,8 @@ class App extends React.Component<AppProps, AppState> {
                 dispatchOptionOverride: true,
               })(...value)
             }
-          >
-            square(2) =&gt; INTERCEPT(4)
-          </Demo>
+            label={(input) => `square(${input.join(",")}) => INTERCEPT(number)`}
+          />
           <Demo
             defaultInput={[3]}
             value={{ success: true, value: 0 }}
@@ -236,9 +238,10 @@ class App extends React.Component<AppProps, AppState> {
                 ...value
               )
             }
-          >
-            square(INTERCEPT(3)) =&gt; INTERCEPT(9)
-          </Demo>
+            label={(input) =>
+              `square(INTERCEPT(${input.join(",")})) => INTERCEPT(number)`
+            }
+          />
           <Demo
             defaultInput={[4]}
             value={{ success: true, value: 0 }}
@@ -248,9 +251,8 @@ class App extends React.Component<AppProps, AppState> {
                 trigger: Trigger.bypass,
               })(...value)
             }
-          >
-            INTERCEPT(square(4)) =&gt; ???
-          </Demo>
+            label={(input) => `square(${input.join(",")}) => number`}
+          />
         </div>
         <h2>Multiple arguments</h2>
         <div className="demo">
@@ -260,9 +262,8 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: "" }}
             callback={this.concat}
             onClick={(cb, value) => cb(...value)}
-          >
-            concat("", "x", "y") =&gt; "xy"
-          </Demo>
+            label={(input) => `concat(${input.join(",")}) => string`}
+          />
           <Demo
             defaultInput={["x", "y"]}
             value={{ success: true, value: "" }}
@@ -272,9 +273,8 @@ class App extends React.Component<AppProps, AppState> {
                 ...value
               )
             }
-          >
-            concat(INTERCEPT("", "x", "y")) =&gt; "xy"
-          </Demo>
+            label={(input) => `concat(INTERCEPT(${input.join(",")})) => string`}
+          />
         </div>
         <h2>API call</h2>
         <div className="demo">
@@ -284,33 +284,40 @@ class App extends React.Component<AppProps, AppState> {
             value={{ success: true, value: 0 }}
             callback={this.apiSum("call")}
             onClick={async (cb, value) => await cb(...value)}
-          >
-            fetch("/sum", INTERCEPT([1,2,3])) =&gt; 6
-          </Demo>
+            label={(input) =>
+              `.post("/sum", sum(INTERCEPT(${input.join(",")})) => number)`
+            }
+          />
+
           <Demo
             defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("return")}
             onClick={async (cb, value) => await cb(...value)}
-          >
-            fetch("/sum", [1,2,3]) =&gt; INTERCEPT(6)
-          </Demo>
+            label={(input) =>
+              `.post("/return", sum(${input.join(",")}) => INTERCEPT(number))`
+            }
+          />
           <Demo
             defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("both")}
             onClick={async (cb, value) => await cb(...value)}
-          >
-            fetch("/sum", INTERCEPT([1,2,3])) =&gt; INTERCEPT(6)
-          </Demo>
+            label={(input) =>
+              `.post("/both", sum(INTERCEPT(${input.join(
+                ","
+              )}) => INTERCEPT(number))`
+            }
+          />
           <Demo
             defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("bypass")}
             onClick={async (cb, value) => await cb(...value)}
-          >
-            fetch("/sum", INTERCEPT([1,2,3])) =&gt; ???
-          </Demo>
+            label={(input) =>
+              `.post("/bypass", sum(INTERCEPT(${input.join(",")}) => any)`
+            }
+          />
         </div>
       </div>
     );
