@@ -1,6 +1,4 @@
-import React, { ChangeEvent } from "react";
-import cx from "classnames";
-// import "./InterceptorModal.css";
+import React, { ChangeEvent, CSSProperties } from "react";
 import ReactDOM from "react-dom";
 import { InterceptBus, InterceptEvent, Trigger } from "@interceptor/lib";
 
@@ -36,6 +34,41 @@ function isValidJsonString(jsonString: string) {
   }
 }
 
+const EditorStyle: CSSProperties = {
+  display: "block",
+  padding: "5px",
+  width: "100%",
+  margin: "10px 20px",
+  boxSizing: "border-box",
+  backgroundColor: "lightyellow",
+  border: "1px solid #999",
+  fontFamily: "monospace",
+};
+
+const ErrorStyle: CSSProperties = {
+  backgroundColor: "lightcoral",
+};
+
+const DisabledStyle: CSSProperties = {
+  backgroundColor: "#eee",
+};
+
+const ActiveEventStyle: CSSProperties = {
+  color: "red",
+  textDecoration: "underline",
+};
+
+const InterceptorModalStyles: CSSProperties = {
+  position: "fixed",
+  right: 0,
+  top: 0,
+  minWidth: "50%",
+  backgroundColor: "white",
+  border: "1px solid red",
+  margin: "20px",
+  padding: "20px",
+};
+
 export default class InterceptorModal extends React.Component<
   InterceptorModalProps,
   InterceptorModalState
@@ -62,12 +95,15 @@ export default class InterceptorModal extends React.Component<
         .includes(this.state.editedData);
     return (
       <fieldset
-        className={cx("interceptorModal", { disabled: !this.props.visible })}
+        style={{
+          ...InterceptorModalStyles,
+          ...(!this.props.visible ? DisabledStyle : {}),
+        }}
         disabled={!this.props.visible}
       >
         <h1>Intercepted</h1>
         <h2>Queue</h2>
-        <ol className="eventSelector">
+        <ol>
           {queue.map((e, index) => {
             const uuidString = `${e.interceptorUuid.split("-")[0]}.${
               e.invocationUuid.split("-")[0]
@@ -75,7 +111,7 @@ export default class InterceptorModal extends React.Component<
             return (
               <li
                 key={index}
-                className={cx({ activeEvent: index === activeEvent })}
+                style={index === activeEvent ? ActiveEventStyle : {}}
               >
                 <span
                   onClick={() => {
@@ -120,7 +156,7 @@ export default class InterceptorModal extends React.Component<
             <h3>Arguments to dispatch</h3>
             <pre>function(</pre>
             <textarea
-              className={cx("editor", { invalidJson: !validInput })}
+              style={{ ...EditorStyle, ...(!validInput ? ErrorStyle : {}) }}
               onChange={this.updateValue.bind(this)}
               value={this.state.editedData}
             />
@@ -146,7 +182,7 @@ export default class InterceptorModal extends React.Component<
             <h3>Dispatch return value</h3>
             <pre>function({JSON.stringify(interceptEvent.args)}) =&gt;</pre>
             <textarea
-              className={cx("editor", { invalidJson: !validInput })}
+              style={{ ...EditorStyle, ...(!validInput ? ErrorStyle : {}) }}
               onChange={this.updateValue.bind(this)}
               value={this.state.editedData}
             />
