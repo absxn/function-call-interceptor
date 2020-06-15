@@ -9,6 +9,15 @@ import {
 import { EventBus, intercept, Trigger } from "@interceptor/lib";
 import classNames from "classnames";
 
+function isValidJsonString(jsonString: string) {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 type DemoResponse<T> =
   | { success: true; value: T }
   | { success: false; message: string };
@@ -20,6 +29,7 @@ interface ButtonState {
 }
 
 interface ButtonProps<T> {
+  disabled: boolean;
   onChange: (value: T) => void;
   onClick: () => Promise<T>;
 }
@@ -32,7 +42,7 @@ class Button<T> extends React.Component<ButtonProps<T>, ButtonState> {
   render() {
     return (
       <button
-        disabled={this.state.disabled}
+        disabled={this.state.disabled || this.props.disabled}
         onClick={() => {
           this.setState(
             {
@@ -63,23 +73,34 @@ class Button<T> extends React.Component<ButtonProps<T>, ButtonState> {
 interface DemoProps<T, A extends any> {
   value: DemoResponse<T>;
   onClick: (
-    callback: (...value: A[]) => Promise<DemoResponse<T>>
+    callback: (...value: A[]) => Promise<DemoResponse<T>>,
+    value: A[]
   ) => Promise<DemoResponse<T>>;
   callback: (...value: A[]) => Promise<DemoResponse<T>>;
+  defaultInput: A[];
 }
 
 interface DemoState<T> {
-  value: DemoResponse<T | null>;
+  output: DemoResponse<T | null>;
+  input: string;
+  isValidInput: boolean;
   calling: boolean;
   callCount: number;
 }
 
 class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
-  state = {
-    value: this.props.value,
-    calling: false,
-    callCount: 0,
-  };
+  constructor(props: DemoProps<T, A>) {
+    super(props);
+
+    const input = JSON.stringify(props.defaultInput);
+    this.state = {
+      input,
+      isValidInput: isValidJsonString(input),
+      output: props.value,
+      calling: false,
+      callCount: 0,
+    };
+  }
 
   render() {
     const cb = (...args: A[]) => {
@@ -95,23 +116,38 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
       });
     };
 
-    const value = this.state.value;
+    const value = this.state.output;
     return (
       <>
-        <div className={classNames("counter", { error: !value.success })}>
-          {value.success === true ? value.value : `ERROR: ${value.message}`}
+        <div>
+          <input
+            type="text"
+            value={this.state.input}
+            className={classNames({ error: !this.state.isValidInput })}
+            onChange={(e) => {
+              const input = e.currentTarget.value;
+              this.setState({
+                input,
+                isValidInput: isValidJsonString(input),
+              });
+            }}
+          />
         </div>
         <Button
+          disabled={!this.state.isValidInput}
           onClick={async () => {
-            const result = await this.props.onClick(cb);
+            const result = await this.props.onClick(
+              cb,
+              JSON.parse(this.state.input)
+            );
             this.setState({
               calling: false,
               callCount: this.state.callCount + 1,
             });
             return result;
           }}
-          onChange={(value) => {
-            this.setState({ value });
+          onChange={(output) => {
+            this.setState({ output });
           }}
         >
           {this.props.children}
@@ -120,6 +156,9 @@ class Demo<T, A> extends React.Component<DemoProps<T, A>, DemoState<T>> {
           {this.state.calling
             ? "Running"
             : `Called ${this.state.callCount} times`}
+        </div>
+        <div className={classNames("counter", { error: !value.success })}>
+          {value.success === true ? value.value : `ERROR: ${value.message}`}
         </div>
       </>
     );
@@ -130,6 +169,15 @@ interface AppProps {
   bus: EventBus;
 }
 
+const Heading = () => (
+  <>
+    <h3>Input</h3>
+    <h3>Trigger</h3>
+    <h3>Job</h3>
+    <h3>Output</h3>
+  </>
+);
+
 class App extends React.Component<AppProps, AppState> {
   render() {
     const browserEventBus = this.props.bus;
@@ -139,61 +187,66 @@ class App extends React.Component<AppProps, AppState> {
         <h1>Interceptor</h1>
         <h2>Single argument demo</h2>
         <div className="demo">
-          <h3>Output</h3>
-          <h3>Trigger</h3>
-          <h3>Job</h3>
+          <Heading />
           <Demo
+            defaultInput={[1]}
             value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={(cb) => cb(1)}
+            onClick={(cb, value) => cb(...value)}
           >
             square(1) =&gt; 1
           </Demo>
           <Demo
+            defaultInput={[1]}
             value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb) =>
+            onClick={async (cb, value) =>
               await intercept(browserEventBus, cb, {
                 trigger: Trigger.call,
                 uuid: "square",
                 dispatchOptionsArguments: [[9, 8, 7]],
                 dispatchOptionOverride: false,
-              })(1)
+              })(...value)
             }
           >
             square(INTERCEPT(1)) =&gt; 1
           </Demo>
           <Demo
+            defaultInput={[2]}
             value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb) =>
+            onClick={async (cb, value) =>
               await intercept(browserEventBus, cb, {
                 trigger: Trigger.return,
                 dispatchOptionsReturnValue: [
                   { success: false, message: "Error" },
                 ],
                 dispatchOptionOverride: true,
-              })(2)
+              })(...value)
             }
           >
             square(2) =&gt; INTERCEPT(4)
           </Demo>
           <Demo
+            defaultInput={[3]}
             value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb) =>
-              await intercept(browserEventBus, cb, { trigger: Trigger.both })(3)
+            onClick={async (cb, value) =>
+              await intercept(browserEventBus, cb, { trigger: Trigger.both })(
+                ...value
+              )
             }
           >
             square(INTERCEPT(3)) =&gt; INTERCEPT(9)
           </Demo>
           <Demo
+            defaultInput={[4]}
             value={{ success: true, value: 0 }}
             callback={this.square}
-            onClick={async (cb) =>
+            onClick={async (cb, value) =>
               await intercept(browserEventBus, cb, {
                 trigger: Trigger.bypass,
-              })(4)
+              })(...value)
             }
           >
             INTERCEPT(square(4)) =&gt; ???
@@ -201,23 +254,22 @@ class App extends React.Component<AppProps, AppState> {
         </div>
         <h2>Multiple arguments</h2>
         <div className="demo">
-          <h3>Output</h3>
-          <h3>Trigger</h3>
-          <h3>Job</h3>
+          <Heading />
           <Demo
+            defaultInput={["x", "y"]}
             value={{ success: true, value: "" }}
             callback={this.concat}
-            onClick={(cb) => cb("x", "y")}
+            onClick={(cb, value) => cb(...value)}
           >
             concat("", "x", "y") =&gt; "xy"
           </Demo>
           <Demo
+            defaultInput={["x", "y"]}
             value={{ success: true, value: "" }}
             callback={this.concat}
-            onClick={(cb) =>
+            onClick={(cb, value) =>
               intercept(browserEventBus, cb, { trigger: Trigger.call })(
-                "x",
-                "y"
+                ...value
               )
             }
           >
@@ -226,34 +278,36 @@ class App extends React.Component<AppProps, AppState> {
         </div>
         <h2>API call</h2>
         <div className="demo">
-          <h3>Output</h3>
-          <h3>Trigger</h3>
-          <h3>Job</h3>
+          <Heading />
           <Demo
+            defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("call")}
-            onClick={async (cb) => await cb(1, 2, 3)}
+            onClick={async (cb, value) => await cb(...value)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; 6
           </Demo>
           <Demo
+            defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("return")}
-            onClick={async (cb) => await cb(1, 2, 3)}
+            onClick={async (cb, value) => await cb(...value)}
           >
             fetch("/sum", [1,2,3]) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
+            defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("both")}
-            onClick={async (cb) => await cb(1, 2, 3)}
+            onClick={async (cb, value) => await cb(...value)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; INTERCEPT(6)
           </Demo>
           <Demo
+            defaultInput={[1, 2, 3]}
             value={{ success: true, value: 0 }}
             callback={this.apiSum("bypass")}
-            onClick={async (cb) => await cb(1, 2, 3)}
+            onClick={async (cb, value) => await cb(...value)}
           >
             fetch("/sum", INTERCEPT([1,2,3])) =&gt; ???
           </Demo>
