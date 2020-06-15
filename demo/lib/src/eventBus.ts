@@ -59,11 +59,11 @@ export class EventBus implements InterceptBus {
   capture(event: InterceptEvent): void {
     console.info("EventBus.capture", event);
     if (event.direction !== "capture") {
-      console.error(`+ EventBus.capture dropping non-capture message`);
+      console.error("+ EventBus.capture dropping non-capture message");
       return;
     }
     if (event.sourceUuid.includes(this.uuid)) {
-      console.warn(`+ EventBus.capture dropping loopback message`);
+      console.warn("+ EventBus.capture dropping loopback message");
       return;
     }
     for (const [id, getHandler] of Object.entries(this.eventHandlers)) {
@@ -78,11 +78,11 @@ export class EventBus implements InterceptBus {
   dispatch(event: InterceptEvent): void {
     console.info("EventBus.dispatch", arguments);
     if (event.direction !== "dispatch") {
-      console.error(`+ EventBus.dispatch dropping non-dispatch message`);
+      console.error("+ EventBus.dispatch dropping non-dispatch message");
       return;
     }
     if (event.sourceUuid.includes(this.uuid)) {
-      console.warn(`+ EventBus.dispatch dropping loopback message`);
+      console.warn("+ EventBus.dispatch dropping loopback message");
       return;
     }
     for (const [id, getHandler] of Object.entries(this.eventHandlers)) {
@@ -97,7 +97,7 @@ export class EventBus implements InterceptBus {
   event(event: InterceptEvent): void {
     console.info("EventBus.event", arguments);
     if (event.sourceUuid.includes(this.uuid)) {
-      console.warn(`+ EventBus.event dropping loopback message`);
+      console.warn("+ EventBus.event dropping loopback message");
       return;
     }
     for (const [id, getHandler] of Object.entries(this.eventHandlers)) {

@@ -5,6 +5,7 @@
   "main": "index.ts",
   "private": true,
   "scripts": {
+    "lint": "eslint demo/*/src/*",
     "format": "prettier --write \"**/*.{ts,css,tsx,json,md}\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "concurrently --names \"APP,API,LIB,CLI\" -c \"bgBlue.bold,bgMagenta.bold,bgRed.bold,bgYellow.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && yarn start)\" \"(cd demo/lib && yarn watch)\" \"(cd demo/cli-web && yarn watch)\""
@@ -15,6 +16,8 @@
   "author": "Teijo Laine",
   "license": "ISC",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^3.3.0",
+    "@typescript-eslint/parser": "^3.3.0",
     "concurrently": "^5.2.0",
     "husky": "^4.2.5",
     "prettier": "^2.0.5",

@@ -6,7 +6,7 @@ import {
   browserWebSocketBridge,
   mountInterceptorClient,
 } from "@interceptor/cli-web";
-import { EventBus, Interceptor, Trigger } from "@interceptor/lib";
+import { EventBus, Trigger } from "@interceptor/lib";
 import classNames from "classnames";
 
 function isValidJsonString(jsonString: string) {
