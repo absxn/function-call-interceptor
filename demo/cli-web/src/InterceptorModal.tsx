@@ -93,6 +93,17 @@ export default class InterceptorModal extends React.Component<
         .map((j) => JSON.stringify(j))
         .concat([originalData])
         .includes(this.state.editedData);
+    const dispatchOption = (args, index) => {
+      const value = JSON.stringify(args.value);
+      const label = args.label || "";
+      return (
+        <option key={index} value={value}>
+          {label ? `${label}: ` : ""}
+          {value}
+        </option>
+      );
+    };
+
     return (
       <fieldset
         style={{
@@ -141,16 +152,9 @@ export default class InterceptorModal extends React.Component<
             <h2>Arguments</h2>
             <h3>Suggested arguments</h3>
             <select onChange={this.updateValue.bind(this)}>
-              <option value={originalData}>{originalData} (input)</option>
+              <option value={originalData}>Input: {originalData}</option>
               {(interceptEvent.dispatchOptionsArguments || []).map(
-                (args, index) => {
-                  const value = JSON.stringify(args);
-                  return (
-                    <option key={index} value={value}>
-                      {value}
-                    </option>
-                  );
-                }
+                dispatchOption
               )}
             </select>
             <h3>Arguments to dispatch</h3>
@@ -167,16 +171,9 @@ export default class InterceptorModal extends React.Component<
             <h2>Return value</h2>
             <h3>Suggested arguments</h3>
             <select onChange={this.updateValue.bind(this)}>
-              <option value={originalData}>{originalData} (input)</option>
+              <option value={originalData}>Input: {originalData}</option>
               {(interceptEvent.dispatchOptionsReturnValue || []).map(
-                (args, index) => {
-                  const value = JSON.stringify(args);
-                  return (
-                    <option key={index} value={value}>
-                      {value}
-                    </option>
-                  );
-                }
+                dispatchOption
               )}
             </select>
             <h3>Dispatch return value</h3>

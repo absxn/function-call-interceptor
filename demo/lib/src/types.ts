@@ -23,17 +23,19 @@ export interface BypassEvent extends BaseEvent {
   dispatchOptionsReturnValue?: any[];
 }
 
+export type DispatchOptions = Array<{ label?: string; value: any }>;
+
 export interface CallEvent extends BaseEvent {
   trigger: Trigger.call;
   args?: any[];
-  dispatchOptionsArguments?: any[];
+  dispatchOptionsArguments?: DispatchOptions;
 }
 
 export interface ReturnEvent extends BaseEvent {
   trigger: Trigger.return;
   args?: any[];
   rv?: any;
-  dispatchOptionsReturnValue?: any[];
+  dispatchOptionsReturnValue?: DispatchOptions;
 }
 
 export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
@@ -67,7 +69,10 @@ type UnwrapPromise<T> = T extends PromiseLike<infer U> ? U : never;
 export interface InterceptOptions<C extends InterceptedFunction> {
   trigger: Trigger;
   uuid?: string;
-  dispatchOptionsArguments?: Parameters<C>[];
-  dispatchOptionsReturnValue?: UnwrapPromise<ReturnType<C>>[];
+  dispatchOptionsArguments?: Array<{ label?: string; value: Parameters<C> }>;
+  dispatchOptionsReturnValue?: Array<{
+    label?: string;
+    value: UnwrapPromise<ReturnType<C>>;
+  }>;
   dispatchOptionOverride?: boolean;
 }

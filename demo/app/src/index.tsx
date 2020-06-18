@@ -190,7 +190,11 @@ class App extends React.Component<AppProps, AppState> {
     const partialSquare = intercept(this.square, {
       trigger: Trigger.call,
       uuid: "square",
-      dispatchOptionsArguments: [[2], [3], [4]],
+      dispatchOptionsArguments: [
+        { value: [2] },
+        { label: "Three", value: [3] },
+        { value: [4] },
+      ],
       dispatchOptionOverride: false,
     });
 
@@ -222,7 +226,10 @@ class App extends React.Component<AppProps, AppState> {
               await intercept(cb, {
                 trigger: Trigger.return,
                 dispatchOptionsReturnValue: [
-                  { success: false, message: "Error" },
+                  {
+                    label: "Demo error",
+                    value: { success: false, message: "Error" },
+                  },
                 ],
                 dispatchOptionOverride: true,
               })(...value)
