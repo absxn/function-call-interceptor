@@ -66,10 +66,43 @@ export type InterceptedFunction =
 
 type UnwrapPromise<T> = T extends PromiseLike<infer U> ? U : never;
 
-export interface InterceptOptions<C extends InterceptedFunction> {
-  trigger: Trigger;
+export type InterceptOptions<C extends InterceptedFunction> =
+  | InterceptOptionsCall<C>
+  | InterceptOptionsReturn<C>
+  | InterceptOptionsBoth<C>
+  | InterceptOptionsBypass<C>;
+
+export interface InterceptOptionsCall<C extends InterceptedFunction> {
+  trigger: Trigger.call;
   uuid?: string;
   dispatchOptionsArguments?: Array<{ label?: string; value: Parameters<C> }>;
+  dispatchOptionOverride?: boolean;
+}
+
+export interface InterceptOptionsReturn<C extends InterceptedFunction> {
+  trigger: Trigger.return;
+  uuid?: string;
+  dispatchOptionsReturnValue?: Array<{
+    label?: string;
+    value: UnwrapPromise<ReturnType<C>>;
+  }>;
+  dispatchOptionOverride?: boolean;
+}
+
+export interface InterceptOptionsBoth<C extends InterceptedFunction> {
+  trigger: Trigger.both;
+  uuid?: string;
+  dispatchOptionsArguments?: Array<{ label?: string; value: Parameters<C> }>;
+  dispatchOptionsReturnValue?: Array<{
+    label?: string;
+    value: UnwrapPromise<ReturnType<C>>;
+  }>;
+  dispatchOptionOverride?: boolean;
+}
+
+export interface InterceptOptionsBypass<C extends InterceptedFunction> {
+  trigger: Trigger.bypass;
+  uuid?: string;
   dispatchOptionsReturnValue?: Array<{
     label?: string;
     value: UnwrapPromise<ReturnType<C>>;
