@@ -43,12 +43,6 @@ export function intercept<
   A extends Parameters<C>
 >(eventBus: InterceptBus, cb: C, options: InterceptOptions<C>): C {
   const interceptorUuid = options.uuid || uuidv4();
-  const trigger = options.trigger;
-  const {
-    dispatchOptionsArguments,
-    dispatchOptionsReturnValue,
-    dispatchOptionOverride,
-  } = options;
 
   return async function () {
     const invocationUuid = uuidv4();
@@ -63,7 +57,10 @@ export function intercept<
 
     // Call interceptor
     const interceptedArgs = await new Promise<A[]>((resolve) => {
-      if (trigger === Trigger.call || trigger === Trigger.both) {
+      if (
+        options.trigger === Trigger.call ||
+        options.trigger === Trigger.both
+      ) {
         console.info(
           `[${uuidString}] Intercepted call function(${originalArgs
             .map((a) => JSON.stringify(a))
@@ -81,8 +78,8 @@ export function intercept<
           trigger: Trigger.call,
           direction: "capture",
           sourceUuid: [],
-          dispatchOptionOverride,
-          dispatchOptionsArguments,
+          dispatchOptionOverride: options.dispatchOptionOverride,
+          dispatchOptionsArguments: options.dispatchOptionsArguments,
         });
       } else {
         resolve(originalArgs);
@@ -92,7 +89,7 @@ export function intercept<
     // Return interceptor
     return new Promise(async (resolve) => {
       // Bypass never calls the original code
-      const returnValue = await (trigger === Trigger.bypass
+      const returnValue = await (options.trigger === Trigger.bypass
         ? Promise.resolve<any>("???") // <V> may be anything
         : (() => {
             console.info(
@@ -106,9 +103,9 @@ export function intercept<
           })());
 
       if (
-        trigger === Trigger.return ||
-        trigger === Trigger.both ||
-        trigger === Trigger.bypass
+        options.trigger === Trigger.return ||
+        options.trigger === Trigger.both ||
+        options.trigger === Trigger.bypass
       ) {
         console.info(
           `[${uuidString}] Intercepted return value => ${JSON.stringify(
@@ -124,8 +121,8 @@ export function intercept<
           interceptorUuid,
           direction: "capture",
           sourceUuid: [],
-          dispatchOptionOverride,
-          dispatchOptionsReturnValue,
+          dispatchOptionOverride: options.dispatchOptionOverride,
+          dispatchOptionsReturnValue: options.dispatchOptionsReturnValue,
         });
 
         events.onDispatch((event) => {
