@@ -1,12 +1,17 @@
 import React, { ChangeEvent, CSSProperties } from "react";
 import ReactDOM from "react-dom";
-import { InterceptBus, InterceptEvent, Trigger } from "@interceptor/lib";
+import {
+  InterceptBus,
+  CaptureEvent,
+  Trigger,
+  DispatchEvent,
+} from "@interceptor/lib";
 
-type EventQueue = Array<InterceptEvent>;
+type EventQueue = Array<CaptureEvent>;
 
 interface InterceptorModalProps {
   visible: boolean;
-  onDispatch: (eventToRemove: number, event: InterceptEvent) => void;
+  onDispatch: (eventToRemove: number, event: DispatchEvent) => void;
   queue: EventQueue;
 }
 
@@ -15,7 +20,7 @@ interface InterceptorModalState {
   editedData: string;
 }
 
-function loadData(queue: InterceptEvent[], index: number): string {
+function loadData(queue: CaptureEvent[], index: number): string {
   if (queue.length === 0) {
     throw new Error("Unexpected zero queue length");
   }
@@ -247,7 +252,7 @@ export default class InterceptorModal extends React.Component<
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: InterceptEvent) => void
+  respond: (eventToRemove: number, event: DispatchEvent) => void
 ) {
   return ReactDOM.render(
     <React.StrictMode>
@@ -270,7 +275,7 @@ function unmount(domId: string) {
 export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
 
-  function respond(eventToRemove: number, event: InterceptEvent) {
+  function respond(eventToRemove: number, event: DispatchEvent) {
     queue.splice(eventToRemove, 1);
 
     eventBus.dispatch(event);

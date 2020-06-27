@@ -1,18 +1,24 @@
 import {
   InterceptBus,
   InterceptedFunction,
-  InterceptEvent,
+  CaptureEvent,
   InterceptOptions,
   RemoveListener,
   Trigger,
   uuidv4,
+  DispatchHandler,
+  CaptureHandler,
+  DispatchEvent,
 } from "./types";
 
-function busEvents(bus: InterceptBus, invocationUuid: string) {
+function busEvents(
+  bus: InterceptBus,
+  invocationUuid: string
+): { onDispatch: (handler: DispatchHandler) => void; capture: CaptureHandler } {
   return {
-    onDispatch(eventListener: (e: InterceptEvent) => void) {
+    onDispatch(eventListener) {
       let removeListener: RemoveListener;
-      const listener = (event: InterceptEvent) => {
+      const listener = (event: DispatchEvent) => {
         // Handle only own events
         if (event.invocationUuid !== invocationUuid) {
           console.warn(
@@ -27,7 +33,7 @@ function busEvents(bus: InterceptBus, invocationUuid: string) {
       };
       removeListener = bus.onDispatch(listener);
     },
-    capture(event: InterceptEvent) {
+    capture(event) {
       bus.capture(event);
     },
   };

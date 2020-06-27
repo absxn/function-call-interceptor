@@ -7,8 +7,35 @@ export function uuidv4() {
   });
 }
 
-export interface BaseEvent {
-  direction: "capture" | "dispatch";
+export type DispatchOptions = Array<{ label?: string; value: any }>;
+
+export interface DispatchBaseEvent {
+  direction: "dispatch";
+  interceptorUuid: string;
+  invocationUuid: string;
+  sourceUuid: string[];
+}
+
+// Bypass never calls the original code
+export interface DispatchBypassEvent extends DispatchBaseEvent {
+  trigger: Trigger.bypass;
+  args?: any[];
+  rv?: any;
+}
+
+export interface DispatchCallEvent extends DispatchBaseEvent {
+  trigger: Trigger.call;
+  args?: any[];
+}
+
+export interface DispatchReturnEvent extends DispatchBaseEvent {
+  trigger: Trigger.return;
+  args?: any[];
+  rv?: any;
+}
+
+export interface CaptureBaseEvent {
+  direction: "capture";
   dispatchOptionOverride?: boolean;
   interceptorUuid: string;
   invocationUuid: string;
@@ -16,29 +43,35 @@ export interface BaseEvent {
 }
 
 // Bypass never calls the original code
-export interface BypassEvent extends BaseEvent {
+export interface CaptureBypassEvent extends CaptureBaseEvent {
   trigger: Trigger.bypass;
   args?: any[];
   rv?: any;
   dispatchOptionsReturnValue?: any[];
 }
 
-export type DispatchOptions = Array<{ label?: string; value: any }>;
-
-export interface CallEvent extends BaseEvent {
+export interface CaptureCallEvent extends CaptureBaseEvent {
   trigger: Trigger.call;
   args?: any[];
   dispatchOptionsArguments?: DispatchOptions;
 }
 
-export interface ReturnEvent extends BaseEvent {
+export interface CaptureReturnEvent extends CaptureBaseEvent {
   trigger: Trigger.return;
   args?: any[];
   rv?: any;
   dispatchOptionsReturnValue?: DispatchOptions;
 }
 
-export type InterceptEvent = BypassEvent | CallEvent | ReturnEvent;
+export type CaptureEvent =
+  | CaptureBypassEvent
+  | CaptureCallEvent
+  | CaptureReturnEvent;
+
+export type DispatchEvent =
+  | DispatchBypassEvent
+  | DispatchCallEvent
+  | DispatchReturnEvent;
 
 export enum Trigger {
   bypass = "bypass",
@@ -49,14 +82,20 @@ export enum Trigger {
 
 export type RemoveListener = () => void;
 
+export type CaptureHandler = (event: CaptureEvent) => void;
+
+export type DispatchHandler = (event: DispatchEvent) => void;
+
+export type InterceptEvent = CaptureEvent | DispatchEvent;
+
 export type InterceptHandler = (event: InterceptEvent) => void;
 
 export interface InterceptBus {
-  capture: InterceptHandler;
-  dispatch: InterceptHandler;
+  capture: CaptureHandler;
+  dispatch: DispatchHandler;
   event: InterceptHandler;
-  onCapture: (listener: InterceptHandler) => RemoveListener;
-  onDispatch: (listener: InterceptHandler) => RemoveListener;
+  onCapture: (listener: CaptureHandler) => RemoveListener;
+  onDispatch: (listener: DispatchHandler) => RemoveListener;
   onEvent: (listener: InterceptHandler) => RemoveListener;
 }
 

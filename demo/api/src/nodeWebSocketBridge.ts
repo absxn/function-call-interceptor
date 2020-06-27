@@ -1,11 +1,11 @@
-import { InterceptBus, InterceptEvent } from "@interceptor/lib";
+import { InterceptBus, InterceptHandler } from "@interceptor/lib";
 import { WebsocketRequestHandler } from "express-ws";
 
 export function nodeWebSocketBridge(
   bus: InterceptBus
 ): WebsocketRequestHandler {
   return function (ws, _req) {
-    const eventListener = (event: InterceptEvent) => {
+    const eventListener: InterceptHandler = (event) => {
       const data = JSON.stringify(event);
       console.info("WebSocket send", data);
       ws.send(data);

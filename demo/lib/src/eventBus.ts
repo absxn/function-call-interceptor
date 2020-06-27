@@ -1,10 +1,14 @@
 import {
   InterceptBus,
   InterceptedFunction,
-  InterceptEvent,
+  CaptureEvent,
   InterceptHandler,
   InterceptOptions,
   uuidv4,
+  DispatchEvent,
+  DispatchHandler,
+  CaptureHandler,
+  InterceptEvent,
 } from "./types";
 import { intercept } from "./interceptor";
 
@@ -30,7 +34,7 @@ export class EventBus implements InterceptBus {
 
   onEvent(
     handler: InterceptHandler,
-    filter: (event: InterceptEvent) => boolean = () => true
+    filter: (event: CaptureEvent | DispatchEvent) => boolean = () => true
   ) {
     const id = this.handlerCounter;
     this.handlerCounter++;
@@ -44,19 +48,19 @@ export class EventBus implements InterceptBus {
     };
   }
 
-  onDispatch(handler: InterceptHandler) {
+  onDispatch(handler: DispatchHandler) {
     this.handlerCounter++;
 
     return this.onEvent(handler, (event) => event.direction === "dispatch");
   }
 
-  onCapture(handler: InterceptHandler) {
+  onCapture(handler: CaptureHandler) {
     this.handlerCounter++;
 
     return this.onEvent(handler, (event) => event.direction === "capture");
   }
 
-  capture(event: InterceptEvent): void {
+  capture(event: CaptureEvent): void {
     console.info("EventBus.capture", event);
     if (event.direction !== "capture") {
       console.error("+ EventBus.capture dropping non-capture message");
@@ -75,7 +79,7 @@ export class EventBus implements InterceptBus {
     }
   }
 
-  dispatch(event: InterceptEvent): void {
+  dispatch(event: DispatchEvent): void {
     console.info("EventBus.dispatch", arguments);
     if (event.direction !== "dispatch") {
       console.error("+ EventBus.dispatch dropping non-dispatch message");
