@@ -5,6 +5,7 @@ import {
   CaptureEvent,
   Trigger,
   DispatchEvent,
+  DispatchOptions,
 } from "@interceptor/lib";
 
 type EventQueue = Array<CaptureEvent>;
@@ -89,15 +90,16 @@ export default class InterceptorModal extends React.Component<
     const interceptEvent = queue[this.state.activeEvent];
     const validInput = isValidJsonString(this.state.editedData);
     const originalData = loadData(queue, this.state.activeEvent);
+    const dispatchOptions: DispatchOptions =
+      interceptEvent.trigger === Trigger.call
+        ? interceptEvent.dispatchOptionsArguments || []
+        : interceptEvent.dispatchOptionsReturnValue || [];
+    const inputOptions = dispatchOptions
+      .map((option) => JSON.stringify(option.value))
+      .concat([originalData]);
     const notEditable =
       interceptEvent.dispatchOptionOverride === false &&
-      !(interceptEvent.trigger === Trigger.call
-        ? interceptEvent.dispatchOptionsArguments || []
-        : interceptEvent.dispatchOptionsReturnValue || []
-      )
-        .map((j) => JSON.stringify(j))
-        .concat([originalData])
-        .includes(this.state.editedData);
+      !inputOptions.includes(this.state.editedData);
     const dispatchOption = (args, index) => {
       const value = JSON.stringify(args.value);
       const label = args.label || "";

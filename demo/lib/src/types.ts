@@ -47,7 +47,7 @@ export interface CaptureBypassEvent extends CaptureBaseEvent {
   trigger: Trigger.bypass;
   args?: any[];
   rv?: any;
-  dispatchOptionsReturnValue?: any[];
+  dispatchOptionsReturnValue?: DispatchOptions;
 }
 
 export interface CaptureCallEvent extends CaptureBaseEvent {
