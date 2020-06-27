@@ -43,52 +43,29 @@ function demoWrapper(cb: (n: number[]) => Promise<number>): RequestHandler {
   };
 }
 
+const sum = (ns: number[]) =>
+  Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
+
 app.post(
   "/interceptor-demo/call",
   demoWrapper((numbers) =>
-    intercept(
-      (ns: number[]) => {
-        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
-      },
-      { uuid: "apicall", trigger: Trigger.call }
-    )(numbers)
+    intercept(sum, { uuid: "apicall", trigger: Trigger.call })(numbers)
   )
 );
 
 app.post(
   "/interceptor-demo/return",
-  demoWrapper((numbers) =>
-    intercept(
-      (ns: number[]) => {
-        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
-      },
-      { trigger: Trigger.return }
-    )(numbers)
-  )
+  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.return })(numbers))
 );
 
 app.post(
   "/interceptor-demo/both",
-  demoWrapper((numbers) =>
-    intercept(
-      (ns: number[]) => {
-        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
-      },
-      { trigger: Trigger.both }
-    )(numbers)
-  )
+  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.both })(numbers))
 );
 
 app.post(
   "/interceptor-demo/bypass",
-  demoWrapper((numbers) =>
-    intercept(
-      (ns: number[]) => {
-        return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
-      },
-      { trigger: Trigger.bypass }
-    )(numbers)
-  )
+  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.bypass })(numbers))
 );
 
 const port = 3001;
