@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
-import { intercept, EventBus, Trigger } from "@interceptor/lib";
+import { EventBus, Trigger } from "@interceptor/lib";
 import { RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
 
@@ -11,6 +11,8 @@ app.use(cors());
 app.use(bodyParser.json());
 
 export const eventBus = new EventBus({ uuid: "api" });
+
+const intercept = eventBus.getInterceptor();
 
 app.ws("/ws", nodeWebSocketBridge(eventBus));
 
@@ -45,7 +47,6 @@ app.post(
   "/interceptor-demo/call",
   demoWrapper((numbers) =>
     intercept(
-      eventBus,
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
@@ -58,7 +59,6 @@ app.post(
   "/interceptor-demo/return",
   demoWrapper((numbers) =>
     intercept(
-      eventBus,
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
@@ -71,7 +71,6 @@ app.post(
   "/interceptor-demo/both",
   demoWrapper((numbers) =>
     intercept(
-      eventBus,
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
@@ -84,7 +83,6 @@ app.post(
   "/interceptor-demo/bypass",
   demoWrapper((numbers) =>
     intercept(
-      eventBus,
       (ns: number[]) => {
         return Promise.resolve(ns.reduce((agg, val) => agg + val, 0));
       },
