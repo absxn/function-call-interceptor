@@ -19,7 +19,7 @@ interface InterceptorModalProps {
 interface InterceptorModalState {
   activeEvent: number | -1;
   editedData: string;
-  trigger: TriggerOptions;
+  hookConfiguration: HookConfiguration;
 }
 
 function loadData(queue: CaptureEvent[], index: number): string {
@@ -76,63 +76,64 @@ const InterceptorModalStyles: CSSProperties = {
   padding: "20px",
 };
 
-type TriggerOptions = "manual" | "fixed" | "pass-through" | "delayed";
+type HookTypes = "suspend" | "pass-through";
 
-const TriggerSelector: React.FC<{
-  selected: TriggerOptions;
-  onChange: (active: TriggerOptions) => void;
-}> = (props) => (
-  <ul style={{ listStyle: "none", padding: 0 }}>
-    <li>
-      <label>
-        <input
-          name="trigger"
-          value="manual"
-          type="radio"
-          checked={props.selected === "manual"}
-          onChange={(e) => props.onChange("manual")}
-        />{" "}
-        Manual
-      </label>
-    </li>
-    <li>
-      <label>
-        <input
-          name="trigger"
-          value="fixed"
-          type="radio"
-          checked={props.selected === "fixed"}
-          onChange={(e) => props.onChange("fixed")}
-        />{" "}
-        Fixed
-      </label>
-    </li>
-    <li>
-      <label>
-        <input
-          name="trigger"
-          value="pass-through"
-          type="radio"
-          checked={props.selected === "pass-through"}
-          onChange={(e) => props.onChange("pass-through")}
-        />{" "}
-        Pass-through
-      </label>
-    </li>
-    <li>
-      <label>
-        <input
-          name="trigger"
-          value={"delayed"}
-          type="radio"
-          checked={props.selected === "delayed"}
-          onChange={(e) => props.onChange("delayed")}
-        />{" "}
-        Delayed pass-through
-      </label>
-    </li>
-  </ul>
-);
+type HookConfiguration = {
+  hook: HookTypes;
+  delayMs: number;
+};
+
+const HookSelector: React.FC<{
+  selected: HookConfiguration;
+  onChange: (active: HookConfiguration) => void;
+}> = (props) => {
+  const { hook, delayMs } = props.selected;
+  return (
+    <ul style={{ listStyle: "none", padding: 0 }}>
+      <li>
+        <label>
+          <input
+            name="hook"
+            value="suspend"
+            type="radio"
+            checked={hook === "suspend"}
+            onChange={(e) => props.onChange({ hook: "suspend", delayMs })}
+          />{" "}
+          Suspend (default)
+        </label>
+      </li>
+      <li>
+        <label>
+          <input
+            name="hook"
+            value="pass-through"
+            type="radio"
+            checked={hook === "pass-through"}
+            onChange={(e) => props.onChange({ hook: "pass-through", delayMs })}
+          />{" "}
+          Pass-through
+        </label>
+      </li>
+      <li>
+        <label>
+          Dispatch delay
+          <input
+            name="delay"
+            value={delayMs}
+            type="text"
+            onChange={(e) =>
+              props.onChange({
+                hook: hook,
+                delayMs: parseInt(e.currentTarget.value, 10),
+              })
+            }
+          />
+          ms
+        </label>
+      </li>
+    </ul>
+  );
+};
 
 export default class InterceptorModal extends React.Component<
   InterceptorModalProps,
@@ -141,7 +142,7 @@ export default class InterceptorModal extends React.Component<
   state = {
     activeEvent: 0,
     editedData: loadData(this.props.queue, 0),
-    trigger: "manual" as const,
+    hookConfiguration: { hook: "suspend" as const, delayMs: 0 },
   };
 
   render() {
@@ -253,11 +254,11 @@ export default class InterceptorModal extends React.Component<
           </>
         )}
         <h2>
-          Trigger <code>{interceptEvent.interceptorUuid}</code>
+          Hook for <code>{interceptEvent.interceptorUuid}</code>
         </h2>
-        <TriggerSelector
-          selected={this.state.trigger}
-          onChange={(trigger) => this.setState({ trigger })}
+        <HookSelector
+          selected={this.state.hookConfiguration}
+          onChange={(hookConfiguration) => this.setState({ hookConfiguration })}
         />
         <button
           disabled={this.state.editedData === originalData}
