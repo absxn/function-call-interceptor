@@ -13,6 +13,7 @@ type EventQueue = Array<CaptureEvent>;
 type ActiveHooks = Array<{
   interceptorUuid: string;
   hookConfiguration: HookConfiguration;
+  hitCount: number;
 }>;
 
 type DispatchSubmitHandler = (
@@ -156,25 +157,28 @@ class HookModal extends React.Component<HookModalProps> {
   render() {
     return (
       <table style={{ width: "100%" }}>
-        {this.props.hooks.map((hook) => (
-          <tr key={hook.interceptorUuid}>
-            <td>{hook.interceptorUuid}</td>
-            <td>{hook.hookConfiguration.hook}</td>
-            <td>{hook.hookConfiguration.delayMs}</td>
-            <td
-              style={{
-                color: "red",
-                textDecoration: "underline",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                this.props.onRemove(hook.interceptorUuid);
-              }}
-            >
-              Remove
-            </td>
-          </tr>
-        ))}
+        <tbody>
+          {this.props.hooks.map((hook) => (
+            <tr key={hook.interceptorUuid}>
+              <td>{hook.interceptorUuid}</td>
+              <td>{hook.hookConfiguration.hook}</td>
+              <td>{hook.hookConfiguration.delayMs}ms</td>
+              <td>{hook.hitCount}</td>
+              <td
+                style={{
+                  color: "red",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  this.props.onRemove(hook.interceptorUuid);
+                }}
+              >
+                Remove
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     );
   }
@@ -461,6 +465,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       hooks.push({
         interceptorUuid: dispatched.interceptorUuid,
         hookConfiguration,
+        hitCount: 0,
       });
     }
 
@@ -495,11 +500,11 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     if (hookIndex > -1) {
       const hook = hooks[hookIndex];
       if (hook.hookConfiguration.hook === "pass-through") {
+        hook.hitCount++;
         console.info(
-          `Triggering ${hook.hookConfiguration.hook} hook for "${hook.interceptorUuid}"`
+          `Triggering ${hook.hookConfiguration.hook} hook (#${hook.hitCount}) for "${hook.interceptorUuid}"`
         );
         eventBus.dispatch({ ...event, direction: "dispatch", sourceUuid: [] });
-        return;
       } else {
         console.warn(
           `Ignoring unsupported ${hook.hookConfiguration.hook} hook for "${hook.interceptorUuid}"`
