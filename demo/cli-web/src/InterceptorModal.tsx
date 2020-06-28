@@ -10,10 +10,22 @@ import {
 
 type EventQueue = Array<CaptureEvent>;
 
+type ActiveHooks = Array<{
+  interceptorUuid: string;
+  hookConfiguration: HookConfiguration;
+}>;
+
+type DispatchSubmitHandler = (
+  eventToRemove: number,
+  event: DispatchEvent,
+  hookConfiguration: HookConfiguration
+) => void;
+
 interface InterceptorModalProps {
   visible: boolean;
-  onDispatch: (eventToRemove: number, event: DispatchEvent) => void;
+  onDispatch: DispatchSubmitHandler;
   queue: EventQueue;
+  hooks: ActiveHooks;
 }
 
 interface InterceptorModalState {
@@ -135,7 +147,26 @@ const HookSelector: React.FC<{
   );
 };
 
-export default class InterceptorModal extends React.Component<
+class HookModal extends React.Component<
+  InterceptorModalProps,
+  InterceptorModalState
+> {
+  render() {
+    return (
+      <table>
+        {this.props.hooks.map((hook) => (
+          <tr key={hook.interceptorUuid}>
+            <td>{hook.interceptorUuid}</td>
+            <td>{hook.hookConfiguration.hook}</td>
+            <td>{hook.hookConfiguration.delayMs}</td>
+          </tr>
+        ))}
+      </table>
+    );
+  }
+}
+
+class DispatchModal extends React.Component<
   InterceptorModalProps,
   InterceptorModalState
 > {
@@ -173,14 +204,7 @@ export default class InterceptorModal extends React.Component<
     };
 
     return (
-      <fieldset
-        style={{
-          ...InterceptorModalStyles,
-          ...(!this.props.visible ? DisabledStyle : {}),
-        }}
-        disabled={!this.props.visible}
-      >
-        <h1>Intercepted</h1>
+      <>
         <h2>Queue</h2>
         <ol>
           {queue.map((e, index) => {
@@ -293,7 +317,9 @@ export default class InterceptorModal extends React.Component<
                     rv: JSON.parse(editedData),
                   };
 
-            this.props.onDispatch(activeEvent, response);
+            this.props.onDispatch(activeEvent, response, {
+              ...this.state.hookConfiguration,
+            });
           }}
         >
           Dispatch{!validInput && " (malformed JSON input)"}
@@ -309,7 +335,7 @@ export default class InterceptorModal extends React.Component<
         >
           {JSON.stringify(interceptEvent, null, 2)}
         </div>
-      </fieldset>
+      </>
     );
   }
 
@@ -318,15 +344,42 @@ export default class InterceptorModal extends React.Component<
   }
 }
 
+class InterceptorModal extends React.Component<
+  InterceptorModalProps,
+  InterceptorModalState
+> {
+  render() {
+    return (
+      <fieldset
+        style={{
+          ...InterceptorModalStyles,
+          ...(!this.props.visible ? DisabledStyle : {}),
+        }}
+        disabled={!this.props.visible}
+      >
+        <h1>Interceptor</h1>
+        {this.props.hooks.length > 0 && <HookModal {...this.props} />}
+        {this.props.queue.length > 0 && <DispatchModal {...this.props} />}
+      </fieldset>
+    );
+  }
+}
+
 // https://stackoverflow.com/a/2117523
 function render(
   domId: string,
   queue: EventQueue,
-  respond: (eventToRemove: number, event: DispatchEvent) => void
+  hooks: ActiveHooks,
+  respond: DispatchSubmitHandler
 ) {
   return ReactDOM.render(
     <React.StrictMode>
-      <InterceptorModal queue={queue} visible={true} onDispatch={respond} />
+      <InterceptorModal
+        hooks={hooks}
+        queue={queue}
+        visible={true}
+        onDispatch={respond}
+      />
     </React.StrictMode>,
     document.getElementById(domId)
   );
@@ -344,18 +397,38 @@ function unmount(domId: string) {
 
 export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
+  const hooks: ActiveHooks = [];
 
-  function respond(eventToRemove: number, event: DispatchEvent) {
-    queue.splice(eventToRemove, 1);
+  const respond: DispatchSubmitHandler = (
+    eventToRemove,
+    event,
+    hookConfiguration
+  ) => {
+    const [dispatched] = queue.splice(eventToRemove, 1);
+
+    if (hookConfiguration.hook === "suspend") {
+      const removeIndex = hooks.findIndex(
+        (hook) => hook.interceptorUuid === dispatched.interceptorUuid
+      );
+      // Default submit will set hook as "suspend", i.e. no change
+      if (removeIndex >= 0) {
+        hooks.splice(removeIndex, 1);
+      }
+    } else {
+      hooks.push({
+        interceptorUuid: dispatched.interceptorUuid,
+        hookConfiguration,
+      });
+    }
 
     eventBus.dispatch(event);
 
     unmount(domId);
 
-    if (queue.length > 0) {
-      render(domId, queue, respond);
+    if (queue.length > 0 || hooks.length > 0) {
+      render(domId, queue, hooks, respond);
     }
-  }
+  };
 
   // In case someone else in the network does the dispatching
   eventBus.onDispatch((event) => {
@@ -365,7 +438,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     if (eventToRemove >= 0) {
       queue.splice(eventToRemove, 1);
       if (queue.length > 0) {
-        render(domId, queue, respond);
+        render(domId, queue, hooks, respond);
       } else {
         unmount(domId);
       }
@@ -374,6 +447,6 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
 
   eventBus.onCapture((event) => {
     queue.push(event);
-    render(domId, queue, respond);
+    render(domId, queue, hooks, respond);
   });
 }
