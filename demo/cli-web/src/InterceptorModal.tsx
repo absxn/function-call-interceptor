@@ -489,7 +489,25 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   });
 
   eventBus.onCapture((event) => {
-    queue.push(event);
+    const hookIndex = hooks.findIndex(
+      (hook) => hook.interceptorUuid === event.interceptorUuid
+    );
+    if (hookIndex > -1) {
+      const hook = hooks[hookIndex];
+      if (hook.hookConfiguration.hook === "pass-through") {
+        console.info(
+          `Triggering ${hook.hookConfiguration.hook} hook for "${hook.interceptorUuid}"`
+        );
+        eventBus.dispatch({ ...event, direction: "dispatch", sourceUuid: [] });
+        return;
+      } else {
+        console.warn(
+          `Ignoring unsupported ${hook.hookConfiguration.hook} hook for "${hook.interceptorUuid}"`
+        );
+      }
+    } else {
+      queue.push(event);
+    }
     render(domId, queue, hooks, respond, onHookRemove);
   });
 }
