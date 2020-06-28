@@ -499,15 +499,27 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     );
     if (hookIndex > -1) {
       const hook = hooks[hookIndex];
-      if (hook.hookConfiguration.hook === "pass-through") {
+      const delayMs = hook.hookConfiguration.delayMs;
+      const hookType = hook.hookConfiguration.hook;
+      const interceptorUuid = hook.interceptorUuid;
+
+      if (hookType === "pass-through") {
         hook.hitCount++;
         console.info(
-          `Triggering ${hook.hookConfiguration.hook} hook (#${hook.hitCount}) for "${hook.interceptorUuid}"`
+          `Triggering ${hookType} hook (#${
+            hook.hitCount
+          }) for "${interceptorUuid}"${delayMs > 0 ? ` delay ${delayMs}ms` : ""}`
         );
-        eventBus.dispatch({ ...event, direction: "dispatch", sourceUuid: [] });
+        setTimeout(() => {
+          eventBus.dispatch({
+            ...event,
+            direction: "dispatch",
+            sourceUuid: [],
+          });
+        }, delayMs);
       } else {
         console.warn(
-          `Ignoring unsupported ${hook.hookConfiguration.hook} hook for "${hook.interceptorUuid}"`
+          `Ignoring unsupported ${hookType} hook for "${interceptorUuid}"`
         );
       }
     } else {
