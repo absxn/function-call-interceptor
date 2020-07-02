@@ -1,17 +1,17 @@
 import React, { ChangeEvent, CSSProperties } from "react";
 import ReactDOM from "react-dom";
 import {
-  InterceptBus,
   CaptureEvent,
-  Trigger,
   DispatchEvent,
   DispatchOptions,
+  InterceptBus,
+  Trigger,
 } from "@interceptor/lib";
 
 type EventQueue = Array<CaptureEvent>;
 
 type ActiveHooks = Array<{
-  interceptorUuid: string;
+  uuidMask: RegExp;
   hookConfiguration: HookConfiguration;
   hitCount: number;
 }>;
@@ -160,8 +160,8 @@ class HookModal extends React.Component<HookModalProps> {
         <table style={{ width: "100%" }}>
           <tbody>
             {this.props.hooks.map((hook) => (
-              <tr key={hook.interceptorUuid}>
-                <td>{hook.interceptorUuid}</td>
+              <tr key={hook.uuidMask.toString()}>
+                <td>{hook.uuidMask.toString()}</td>
                 <td>{hook.hookConfiguration.hook}</td>
                 <td>{hook.hookConfiguration.delayMs}ms</td>
                 <td>{hook.hitCount}</td>
@@ -172,7 +172,7 @@ class HookModal extends React.Component<HookModalProps> {
                     cursor: "pointer",
                   }}
                   onClick={() => {
-                    this.props.onRemove(hook.interceptorUuid);
+                    this.props.onRemove(hook.uuidMask.toString());
                   }}
                 >
                   Remove
@@ -459,7 +459,13 @@ function unmount(domId: string) {
 
 export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
-  const hooks: ActiveHooks = [];
+  const hooks: ActiveHooks = [
+    {
+      hookConfiguration: { delayMs: 0, hook: "suspend" },
+      uuidMask: /.*/,
+      hitCount: 0,
+    },
+  ];
 
   // Toggle debugger when not suspended
   let visible = false;
@@ -478,7 +484,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
 
   const onHookRemove = (uuid: string, skipRender: boolean = false) => {
     const removeIndex = hooks.findIndex(
-      (hook) => hook.interceptorUuid === uuid
+      (hook) => hook.uuidMask.toString() === uuid
     );
     console.info(`Remove hook ${uuid} -> ${removeIndex}`);
     // Default submit will set hook as "suspend", i.e. no change
@@ -502,7 +508,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       onHookRemove(dispatched.interceptorUuid, true);
     } else {
       hooks.push({
-        interceptorUuid: dispatched.interceptorUuid,
+        uuidMask: new RegExp(dispatched.interceptorUuid),
         hookConfiguration,
         hitCount: 0,
       });
@@ -533,24 +539,22 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   });
 
   eventBus.onCapture((event) => {
-    const hookIndex = hooks.findIndex(
-      (hook) => hook.interceptorUuid === event.interceptorUuid
+    const hookIndex = hooks.findIndex((hook) =>
+      hook.uuidMask.test(event.interceptorUuid)
     );
     if (hookIndex > -1) {
       const hook = hooks[hookIndex];
       const delayMs = hook.hookConfiguration.delayMs;
       const hookType = hook.hookConfiguration.hook;
-      const interceptorUuid = hook.interceptorUuid;
+
+      console.info(
+        `Triggering ${hookType} hook (#${hook.hitCount}) for "${
+          hook.uuidMask
+        }"${delayMs > 0 ? ` delay ${delayMs}ms` : ""}`
+      );
 
       if (hookType === "pass-through") {
         hook.hitCount++;
-        console.info(
-          `Triggering ${hookType} hook (#${
-            hook.hitCount
-          }) for "${interceptorUuid}"${
-            delayMs > 0 ? ` delay ${delayMs}ms` : ""
-          }`
-        );
         setTimeout(() => {
           eventBus.dispatch({
             ...event,
@@ -558,14 +562,15 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
             sourceUuid: [],
           });
         }, delayMs);
+      } else if (hookType === "suspend") {
+        queue.push(event);
       } else {
-        console.warn(
-          `Ignoring unsupported ${hookType} hook for "${interceptorUuid}"`
-        );
+        `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
       }
+
+      render(domId, visible, queue, hooks, respond, onHookRemove);
     } else {
-      queue.push(event);
+      console.info("Ignoring event, not matching a hook");
     }
-    render(domId, visible, queue, hooks, respond, onHookRemove);
   });
 }
