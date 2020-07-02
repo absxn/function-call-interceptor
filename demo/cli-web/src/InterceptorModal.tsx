@@ -508,7 +508,9 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         console.info(
           `Triggering ${hookType} hook (#${
             hook.hitCount
-          }) for "${interceptorUuid}"${delayMs > 0 ? ` delay ${delayMs}ms` : ""}`
+          }) for "${interceptorUuid}"${
+            delayMs > 0 ? ` delay ${delayMs}ms` : ""
+          }`
         );
         setTimeout(() => {
           eventBus.dispatch({
