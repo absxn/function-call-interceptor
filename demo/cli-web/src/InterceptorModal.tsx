@@ -399,12 +399,13 @@ class InterceptorModal extends React.Component<
 // https://stackoverflow.com/a/2117523
 function render(
   domId: string,
+  visible: boolean,
   queue: EventQueue,
   hooks: ActiveHooks,
   respond: DispatchSubmitHandler,
   onHookRemove: (uuid: string) => void
 ) {
-  if (queue.length === 0 && hooks.length === 0) {
+  if (queue.length === 0 && hooks.length === 0 && visible === false) {
     unmount(domId);
     return;
   }
@@ -437,6 +438,21 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   const queue: EventQueue = [];
   const hooks: ActiveHooks = [];
 
+  // Toggle debugger when not suspended
+  let visible = false;
+
+  document.addEventListener(
+    "keyup",
+    (event) => {
+      if (event.code === "Backquote") {
+        visible = !visible;
+      }
+
+      render(domId, visible, queue, hooks, respond, onHookRemove);
+    },
+    false
+  );
+
   const onHookRemove = (uuid: string, skipRender: boolean = false) => {
     const removeIndex = hooks.findIndex(
       (hook) => hook.interceptorUuid === uuid
@@ -448,7 +464,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     }
 
     if (!skipRender) {
-      render(domId, queue, hooks, respond, onHookRemove);
+      render(domId, visible, queue, hooks, respond, onHookRemove);
     }
   };
 
@@ -473,8 +489,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
 
     unmount(domId);
 
-    if (queue.length > 0 || hooks.length > 0) {
-      render(domId, queue, hooks, respond, onHookRemove);
+    if (queue.length > 0 || hooks.length > 0 || visible) {
+      render(domId, visible, queue, hooks, respond, onHookRemove);
     }
   };
 
@@ -485,8 +501,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     );
     if (eventToRemove >= 0) {
       queue.splice(eventToRemove, 1);
-      if (queue.length > 0) {
-        render(domId, queue, hooks, respond, onHookRemove);
+      if (queue.length > 0 || visible) {
+        render(domId, visible, queue, hooks, respond, onHookRemove);
       } else {
         unmount(domId);
       }
@@ -527,6 +543,6 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     } else {
       queue.push(event);
     }
-    render(domId, queue, hooks, respond, onHookRemove);
+    render(domId, visible, queue, hooks, respond, onHookRemove);
   });
 }
