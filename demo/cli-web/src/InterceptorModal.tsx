@@ -156,30 +156,49 @@ interface HookModalProps {
 class HookModal extends React.Component<HookModalProps> {
   render() {
     return (
-      <table style={{ width: "100%" }}>
-        <tbody>
-          {this.props.hooks.map((hook) => (
-            <tr key={hook.interceptorUuid}>
-              <td>{hook.interceptorUuid}</td>
-              <td>{hook.hookConfiguration.hook}</td>
-              <td>{hook.hookConfiguration.delayMs}ms</td>
-              <td>{hook.hitCount}</td>
-              <td
-                style={{
-                  color: "red",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  this.props.onRemove(hook.interceptorUuid);
-                }}
-              >
-                Remove
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <>
+        <table style={{ width: "100%" }}>
+          <tbody>
+            {this.props.hooks.map((hook) => (
+              <tr key={hook.interceptorUuid}>
+                <td>{hook.interceptorUuid}</td>
+                <td>{hook.hookConfiguration.hook}</td>
+                <td>{hook.hookConfiguration.delayMs}ms</td>
+                <td>{hook.hitCount}</td>
+                <td
+                  style={{
+                    color: "red",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    this.props.onRemove(hook.interceptorUuid);
+                  }}
+                >
+                  Remove
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <fieldset>
+          <label>
+            Trigger
+            <select>
+              <option selected>Pass-through</option>
+            </select>
+          </label>
+          <label>
+            UUID pattern
+            <input type="text" />
+          </label>
+          <label>
+            Delay
+            <input type="text" />
+          </label>
+          <button>Add</button>
+        </fieldset>
+      </>
     );
   }
 }
@@ -384,12 +403,10 @@ class InterceptorModal extends React.Component<
         disabled={!this.props.visible}
       >
         <h1>Interceptor</h1>
-        {this.props.hooks.length > 0 && (
-          <HookModal
-            hooks={this.props.hooks}
-            onRemove={this.props.onHookRemove}
-          />
-        )}
+        <HookModal
+          hooks={this.props.hooks}
+          onRemove={this.props.onHookRemove}
+        />
         {this.props.queue.length > 0 && <DispatchModal {...this.props} />}
       </fieldset>
     );
