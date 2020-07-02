@@ -35,6 +35,12 @@ interface InterceptorModalState {
   hookConfiguration: HookConfiguration;
 }
 
+interface HookSetup {
+  uuidMask: RegExp;
+  delayMs: number;
+  action: HookTypes;
+}
+
 function loadData(queue: CaptureEvent[], index: number): string {
   if (queue.length === 0) {
     throw new Error("Unexpected zero queue length");
@@ -154,13 +160,21 @@ interface HookDefinitionState {
   delayString: string;
 }
 
+type OnHookAdd = (hookSetup: HookSetup) => void;
+
+type OnHookRemove = (index: number, skipRender?: boolean) => void;
+
+interface HookDefinitionProps {
+  onAdd: OnHookAdd;
+}
+
 class HookDefinition extends React.Component<
-  {},
+  HookDefinitionProps,
   HookDefinitionState & { isValid: boolean }
 > {
   state = {
     triggerString: "suspend",
-    uuidMaskString: "/.*/",
+    uuidMaskString: ".*",
     delayString: "0",
     isValid: true,
   };
@@ -218,7 +232,18 @@ class HookDefinition extends React.Component<
             value={this.state.delayString}
           />
         </label>
-        <button disabled={!this.state.isValid}>Add</button>
+        <button
+          onClick={() =>
+            this.props.onAdd({
+              action: this.state.triggerString as HookTypes,
+              delayMs: parseInt(this.state.delayString, 0),
+              uuidMask: new RegExp(this.state.uuidMaskString),
+            })
+          }
+          disabled={!this.state.isValid}
+        >
+          Add
+        </button>
       </fieldset>
     );
   }
@@ -249,7 +274,8 @@ class HookDefinition extends React.Component<
 
 interface HookModalProps {
   hooks: ActiveHooks;
-  onRemove: (uuid: string) => void;
+  onAdd: OnHookAdd;
+  onRemove: OnHookRemove;
 }
 
 class HookModal extends React.Component<HookModalProps> {
@@ -258,8 +284,8 @@ class HookModal extends React.Component<HookModalProps> {
       <>
         <table style={{ width: "100%" }}>
           <tbody>
-            {this.props.hooks.map((hook) => (
-              <tr key={hook.uuidMask.toString()}>
+            {this.props.hooks.map((hook, index) => (
+              <tr key={index}>
                 <td>{hook.uuidMask.toString()}</td>
                 <td>{hook.hookConfiguration.hook}</td>
                 <td>{hook.hookConfiguration.delayMs}ms</td>
@@ -271,7 +297,7 @@ class HookModal extends React.Component<HookModalProps> {
                     cursor: "pointer",
                   }}
                   onClick={() => {
-                    this.props.onRemove(hook.uuidMask.toString());
+                    this.props.onRemove(index);
                   }}
                 >
                   Remove
@@ -280,7 +306,7 @@ class HookModal extends React.Component<HookModalProps> {
             ))}
           </tbody>
         </table>
-        <HookDefinition />
+        <HookDefinition onAdd={this.props.onAdd} />
       </>
     );
   }
@@ -475,7 +501,8 @@ interface InterceptorModalProps {
   onDispatch: DispatchSubmitHandler;
   queue: EventQueue;
   hooks: ActiveHooks;
-  onHookRemove: (uuid: string) => void;
+  onHookAdd: OnHookAdd;
+  onHookRemove: OnHookRemove;
 }
 
 class InterceptorModal extends React.Component<
@@ -494,6 +521,7 @@ class InterceptorModal extends React.Component<
         <h1>Interceptor</h1>
         <HookModal
           hooks={this.props.hooks}
+          onAdd={this.props.onHookAdd}
           onRemove={this.props.onHookRemove}
         />
         {this.props.queue.length > 0 && <DispatchModal {...this.props} />}
@@ -509,7 +537,8 @@ function render(
   queue: EventQueue,
   hooks: ActiveHooks,
   respond: DispatchSubmitHandler,
-  onHookRemove: (uuid: string) => void
+  onHookAdd: OnHookAdd,
+  onHookRemove: OnHookRemove
 ) {
   if (queue.length === 0 && hooks.length === 0 && visible === false) {
     unmount(domId);
@@ -523,6 +552,7 @@ function render(
         queue={queue}
         visible={true}
         onDispatch={respond}
+        onHookAdd={onHookAdd}
         onHookRemove={onHookRemove}
       />
     </React.StrictMode>,
@@ -560,23 +590,32 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         visible = !visible;
       }
 
-      render(domId, visible, queue, hooks, respond, onHookRemove);
+      render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
     },
     false
   );
 
-  const onHookRemove = (uuid: string, skipRender: boolean = false) => {
-    const removeIndex = hooks.findIndex(
-      (hook) => hook.uuidMask.toString() === uuid
-    );
-    console.info(`Remove hook ${uuid} -> ${removeIndex}`);
+  const onHookAdd = (hookSetup: HookSetup) => {
+    console.log("ADD", hookSetup);
+    // Prepend so latest hook will be applied first if it matches the mask
+    hooks.unshift({
+      uuidMask: hookSetup.uuidMask,
+      hitCount: 0,
+      hookConfiguration: { hook: hookSetup.action, delayMs: hookSetup.delayMs },
+    });
+
+    render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
+  };
+
+  const onHookRemove: OnHookRemove = (removeIndex, skipRender = false) => {
+    console.info(`Remove hook ${removeIndex}`);
     // Default submit will set hook as "suspend", i.e. no change
     if (removeIndex >= 0) {
       hooks.splice(removeIndex, 1);
     }
 
     if (!skipRender) {
-      render(domId, visible, queue, hooks, respond, onHookRemove);
+      render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
     }
   };
 
@@ -587,22 +626,23 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   ) => {
     const [dispatched] = queue.splice(eventToRemove, 1);
 
-    if (hookConfiguration.hook === "suspend") {
-      onHookRemove(dispatched.interceptorUuid, true);
-    } else {
-      hooks.push({
-        uuidMask: new RegExp(dispatched.interceptorUuid),
-        hookConfiguration,
-        hitCount: 0,
-      });
-    }
+    // TODO: Figure out if we want to be able to "single trigger" hooks
+    //   if (hookConfiguration.hook === "suspend") {
+    //   onHookRemove(0, true);
+    // } else {
+    //   hooks.push({
+    //     uuidMask: new RegExp(dispatched.interceptorUuid),
+    //     hookConfiguration,
+    //     hitCount: 0,
+    //   });
+    // }
 
     eventBus.dispatch(event);
 
     unmount(domId);
 
     if (queue.length > 0 || hooks.length > 0 || visible) {
-      render(domId, visible, queue, hooks, respond, onHookRemove);
+      render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
     }
   };
 
@@ -614,7 +654,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     if (eventToRemove >= 0) {
       queue.splice(eventToRemove, 1);
       if (queue.length > 0 || visible) {
-        render(domId, visible, queue, hooks, respond, onHookRemove);
+        render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
       } else {
         unmount(domId);
       }
@@ -651,7 +691,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
       }
 
-      render(domId, visible, queue, hooks, respond, onHookRemove);
+      render(domId, visible, queue, hooks, respond, onHookAdd, onHookRemove);
     } else {
       console.info("Ignoring event, not matching a hook");
     }
