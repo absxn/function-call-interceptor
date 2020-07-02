@@ -203,6 +203,35 @@ class HookModal extends React.Component<HookModalProps> {
   }
 }
 
+const EventQueue: React.FC<{
+  queue: EventQueue;
+  activeEvent: number;
+  onClick: (activeEvent: number) => void;
+}> = ({ queue, activeEvent, onClick }) => (
+  <ol>
+    {queue.map((e, index) => {
+      const uuidString = `${e.interceptorUuid.split("-")[0]}.${
+        e.invocationUuid.split("-")[0]
+      }`;
+      return (
+        <li key={index} style={index === activeEvent ? ActiveEventStyle : {}}>
+          <span onClick={() => onClick(index)}>
+            uuid({uuidString}
+            {") "}
+            {e.trigger === Trigger.call ? (
+              <code>call({JSON.stringify(e.args)}) =&gt; ?</code>
+            ) : (
+              <code>
+                return({JSON.stringify(e.args)}) =&gt; {JSON.stringify(e.rv)}
+              </code>
+            )}
+          </span>
+        </li>
+      );
+    })}
+  </ol>
+);
+
 class DispatchModal extends React.Component<
   DispatchModalProps,
   InterceptorModalState
@@ -243,39 +272,16 @@ class DispatchModal extends React.Component<
     return (
       <>
         <h2>Queue</h2>
-        <ol>
-          {queue.map((e, index) => {
-            const uuidString = `${e.interceptorUuid.split("-")[0]}.${
-              e.invocationUuid.split("-")[0]
-            }`;
-            return (
-              <li
-                key={index}
-                style={index === activeEvent ? ActiveEventStyle : {}}
-              >
-                <span
-                  onClick={() => {
-                    this.setState({
-                      activeEvent: index,
-                      editedData: loadData(this.props.queue, index),
-                    });
-                  }}
-                >
-                  uuid({uuidString}
-                  {") "}
-                  {e.trigger === Trigger.call ? (
-                    <code>call({JSON.stringify(e.args)}) =&gt; ?</code>
-                  ) : (
-                    <code>
-                      return({JSON.stringify(e.args)}) =&gt;{" "}
-                      {JSON.stringify(e.rv)}
-                    </code>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <EventQueue
+          activeEvent={activeEvent}
+          queue={queue}
+          onClick={(index) => {
+            this.setState({
+              activeEvent: index,
+              editedData: loadData(this.props.queue, index),
+            });
+          }}
+        />
         {interceptEvent.trigger === Trigger.call ? (
           <>
             <h2>Arguments</h2>
