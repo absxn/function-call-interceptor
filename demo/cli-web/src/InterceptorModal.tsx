@@ -600,97 +600,25 @@ function unmount(domId: string) {
 }
 
 export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
-  const queue: EventQueue = [];
-  const hooks: ActiveHooks = [
-    {
-      hookConfiguration: { delayMs: 0, hook: "suspend" },
-      uuidMask: /.*/,
-      hitCount: 0,
-    },
-  ];
-
-  // Toggle debugger when not suspended
-  let visible = true;
-
-  function onToggleVisible(isVisible: boolean) {
-    visible = isVisible;
-
-    render({
-      domId,
-      visible,
-      queue,
-      hooks,
-      respond,
-      onHookAdd,
-      onHookRemove,
-      onToggleVisible,
-    });
-  }
-
-  document.addEventListener(
-    "keyup",
-    (event) => {
-      if (event.code === "Backquote") {
-        visible = !visible;
-      }
-
-      if (visible) {
-        render({
-          domId,
-          visible,
-          queue,
-          hooks,
-          respond,
-          onHookAdd,
-          onHookRemove,
-          onToggleVisible,
-        });
-      } else {
-        unmount(domId);
-      }
-    },
-    false
-  );
-
   const onHookAdd = (hookSetup: HookSetup) => {
-    console.log("ADD", hookSetup);
     // Prepend so latest hook will be applied first if it matches the mask
-    hooks.unshift({
+    state.hooks.unshift({
       uuidMask: hookSetup.uuidMask,
       hitCount: 0,
       hookConfiguration: { hook: hookSetup.action, delayMs: hookSetup.delayMs },
     });
 
-    render({
-      domId,
-      visible,
-      queue,
-      hooks,
-      respond,
-      onHookAdd,
-      onHookRemove,
-      onToggleVisible,
-    });
+    render(state);
   };
 
   const onHookRemove: OnHookRemove = (removeIndex, skipRender = false) => {
-    console.info(`Remove hook ${removeIndex}`);
     // Default submit will set hook as "suspend", i.e. no change
     if (removeIndex >= 0) {
-      hooks.splice(removeIndex, 1);
+      state.hooks.splice(removeIndex, 1);
     }
 
     if (!skipRender) {
-      render({
-        domId,
-        visible,
-        queue,
-        hooks,
-        respond,
-        onHookAdd,
-        onHookRemove,
-        onToggleVisible,
-      });
+      render(state);
     }
   };
 
@@ -699,55 +627,63 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     event,
     hookConfiguration
   ) => {
-    const [dispatched] = queue.splice(eventToRemove, 1);
-
-    // TODO: Figure out if we want to be able to "single trigger" hooks
-    //   if (hookConfiguration.hook === "suspend") {
-    //   onHookRemove(0, true);
-    // } else {
-    //   hooks.push({
-    //     uuidMask: new RegExp(dispatched.interceptorUuid),
-    //     hookConfiguration,
-    //     hitCount: 0,
-    //   });
-    // }
+    const [dispatched] = state.queue.splice(eventToRemove, 1);
 
     eventBus.dispatch(event);
 
     unmount(domId);
 
-    if (queue.length > 0) {
-      render({
-        domId,
-        visible,
-        queue,
-        hooks,
-        respond,
-        onHookAdd,
-        onHookRemove,
-        onToggleVisible,
-      });
+    if (state.queue.length > 0) {
+      render(state);
     }
   };
+  const state: RenderProps = {
+    domId,
+    visible: true,
+    queue: [],
+    hooks: [
+      {
+        hookConfiguration: { delayMs: 0, hook: "suspend" },
+        uuidMask: /.*/,
+        hitCount: 0,
+      },
+    ],
+    respond,
+    onHookAdd,
+    onHookRemove,
+    onToggleVisible,
+  };
+
+  function onToggleVisible(isVisible: boolean) {
+    state.visible = isVisible;
+    render(state);
+  }
+
+  document.addEventListener(
+    "keyup",
+    (event) => {
+      if (event.code === "Backquote") {
+        state.visible = !state.visible;
+      }
+
+      if (state.visible) {
+        render(state);
+      } else {
+        unmount(domId);
+      }
+    },
+    false
+  );
 
   // In case someone else in the network does the dispatching
   eventBus.onDispatch((event) => {
-    const eventToRemove = queue.findIndex(
+    const eventToRemove = state.queue.findIndex(
       (e) => e.invocationUuid === event.invocationUuid
     );
     if (eventToRemove >= 0) {
-      queue.splice(eventToRemove, 1);
-      if (queue.length > 0) {
-        render({
-          domId,
-          visible,
-          queue,
-          hooks,
-          respond,
-          onHookAdd,
-          onHookRemove,
-          onToggleVisible,
-        });
+      state.queue.splice(eventToRemove, 1);
+      if (state.queue.length > 0) {
+        render(state);
       } else {
         unmount(domId);
       }
@@ -755,11 +691,11 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   });
 
   eventBus.onCapture((event) => {
-    const hookIndex = hooks.findIndex((hook) =>
+    const hookIndex = state.hooks.findIndex((hook) =>
       hook.uuidMask.test(event.interceptorUuid)
     );
     if (hookIndex > -1) {
-      const hook = hooks[hookIndex];
+      const hook = state.hooks[hookIndex];
       const delayMs = hook.hookConfiguration.delayMs;
       const hookType = hook.hookConfiguration.hook;
 
@@ -779,21 +715,12 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
           });
         }, delayMs);
       } else if (hookType === "suspend") {
-        queue.push(event);
+        state.queue.push(event);
       } else {
         `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
       }
 
-      render({
-        domId,
-        visible,
-        queue,
-        hooks,
-        respond,
-        onHookAdd,
-        onHookRemove,
-        onToggleVisible,
-      });
+      render(state);
     } else {
       console.info("Ignoring event, not matching a hook");
     }
