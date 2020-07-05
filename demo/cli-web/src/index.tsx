@@ -1,3 +1,3 @@
 // import "./index.css";
-export { mountInterceptorClient } from "./InterceptorModal";
+export { mountInterceptorClient } from "./client";
 export { browserWebSocketBridge } from "./browserWebSocketBridge";
