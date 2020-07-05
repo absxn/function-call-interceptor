@@ -36,7 +36,7 @@ interface InterceptorModalProps {
 export default class InterceptorModal extends React.Component<
   InterceptorModalProps
 > {
-  render() {
+  render(): JSX.Element {
     return (
       <fieldset
         style={{

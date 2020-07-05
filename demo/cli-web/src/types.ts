@@ -1,10 +1,4 @@
-import {
-  CaptureEvent,
-  DispatchEvent,
-  DispatchOptions,
-  InterceptBus,
-  Trigger,
-} from "@interceptor/lib";
+import { CaptureEvent, DispatchEvent } from "@interceptor/lib";
 
 export type CapturedEvents = Array<CaptureEvent>;
 

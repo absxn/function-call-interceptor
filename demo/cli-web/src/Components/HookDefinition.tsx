@@ -22,7 +22,7 @@ export default class HookDefinition extends React.Component<
     isValid: true,
   };
 
-  render() {
+  render(): JSX.Element {
     return (
       <fieldset>
         <label>

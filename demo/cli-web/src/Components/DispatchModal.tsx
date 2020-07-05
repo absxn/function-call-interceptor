@@ -65,7 +65,7 @@ export default class DispatchModal extends React.Component<
     hookConfiguration: { hook: "suspend" as const, delayMs: 0 },
   };
 
-  render() {
+  render(): JSX.Element {
     const activeEvent = this.state.activeEvent;
     const queue = this.props.queue;
     const interceptEvent = queue[this.state.activeEvent];
@@ -201,7 +201,9 @@ export default class DispatchModal extends React.Component<
     );
   }
 
-  updateValue(event: ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>) {
+  updateValue(
+    event: ChangeEvent<HTMLTextAreaElement | HTMLSelectElement>
+  ): void {
     this.setState({ editedData: event.currentTarget.value });
   }
 }

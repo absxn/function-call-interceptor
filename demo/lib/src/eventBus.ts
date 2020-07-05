@@ -12,6 +12,8 @@ import {
 } from "./types";
 import { intercept } from "./interceptor";
 
+export type Unsubscribe = () => boolean;
+
 export class EventBus implements InterceptBus {
   private eventHandlers: {
     [id: number]: (event: InterceptEvent) => InterceptHandler;
@@ -35,7 +37,7 @@ export class EventBus implements InterceptBus {
   onEvent(
     handler: InterceptHandler,
     filter: (event: CaptureEvent | DispatchEvent) => boolean = () => true
-  ) {
+  ): Unsubscribe {
     const id = this.handlerCounter;
     this.handlerCounter++;
 
@@ -48,13 +50,13 @@ export class EventBus implements InterceptBus {
     };
   }
 
-  onDispatch(handler: DispatchHandler) {
+  onDispatch(handler: DispatchHandler): Unsubscribe {
     this.handlerCounter++;
 
     return this.onEvent(handler, (event) => event.direction === "dispatch");
   }
 
-  onCapture(handler: CaptureHandler) {
+  onCapture(handler: CaptureHandler): Unsubscribe {
     this.handlerCounter++;
 
     return this.onEvent(handler, (event) => event.direction === "capture");
@@ -80,7 +82,7 @@ export class EventBus implements InterceptBus {
   }
 
   dispatch(event: DispatchEvent): void {
-    console.info("EventBus.dispatch", arguments);
+    console.info("EventBus.dispatch", event);
     if (event.direction !== "dispatch") {
       console.error("+ EventBus.dispatch dropping non-dispatch message");
       return;
@@ -99,7 +101,7 @@ export class EventBus implements InterceptBus {
   }
 
   event(event: InterceptEvent): void {
-    console.info("EventBus.event", arguments);
+    console.info("EventBus.event", event);
     if (event.sourceUuid.includes(this.uuid)) {
       console.warn("+ EventBus.event dropping loopback message");
       return;

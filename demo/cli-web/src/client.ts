@@ -18,7 +18,10 @@ function unmount(domId: string) {
   }
 }
 
-export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
+export function mountInterceptorClient(
+  domId: string,
+  eventBus: InterceptBus
+): void {
   const onHookAdd = (hookSetup: HookSetup) => {
     // Prepend so latest hook will be applied first if it matches the mask
     state.hooks.unshift({
@@ -41,12 +44,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     }
   };
 
-  const onDispatchSubmit: DispatchSubmitHandler = (
-    eventToRemove,
-    event,
-    hookConfiguration
-  ) => {
-    const [dispatched] = state.queue.splice(eventToRemove, 1);
+  const onDispatchSubmit: DispatchSubmitHandler = (eventToRemove, event) => {
+    state.queue.splice(eventToRemove, 1);
 
     eventBus.dispatch(event);
 

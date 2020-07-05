@@ -2,10 +2,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import expressWs from "express-ws";
 import { EventBus, Trigger } from "@interceptor/lib";
-import { RequestHandler } from "express-serve-static-core";
+import { Request, RequestHandler } from "express-serve-static-core";
 import { nodeWebSocketBridge } from "./nodeWebSocketBridge";
 
-const { app } = expressWs(require("express")());
+import express from "express";
+
+const { app } = expressWs(express());
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -16,12 +18,12 @@ const intercept = eventBus.getInterceptor();
 
 app.ws("/ws", nodeWebSocketBridge(eventBus));
 
-function parseInput(req: any): number[] | null {
-  const body: any = req.body;
+function parseInput(req: Request): number[] | null {
+  const body = req.body;
   if (
-    !body.hasOwnProperty("numbers") ||
+    !Object.prototype.hasOwnProperty.call(body, "numbers") ||
     !(body.numbers instanceof Array) ||
-    body.numbers.filter((x: any) => typeof x !== "number").length > 0
+    body.numbers.filter((x: unknown) => typeof x !== "number").length > 0
   ) {
     return null;
   }

@@ -1,6 +1,9 @@
 import { InterceptBus } from "@interceptor/lib";
 
-export function browserWebSocketBridge(bridgeUrl: string, bus: InterceptBus) {
+export function browserWebSocketBridge(
+  bridgeUrl: string,
+  bus: InterceptBus
+): void {
   console.info("WebSocket create");
   const socket = new WebSocket(bridgeUrl);
 
@@ -16,7 +19,7 @@ export function browserWebSocketBridge(bridgeUrl: string, bus: InterceptBus) {
     });
   };
 
-  socket.onclose = function (event) {
+  socket.onclose = function () {
     console.info("WebSocket onclose()");
   };
 

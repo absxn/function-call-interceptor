@@ -4,7 +4,7 @@ import { WebsocketRequestHandler } from "express-ws";
 export function nodeWebSocketBridge(
   bus: InterceptBus
 ): WebsocketRequestHandler {
-  return function (ws, _req) {
+  return function (ws) {
     const eventListener: InterceptHandler = (event) => {
       const data = JSON.stringify(event);
       console.info("WebSocket send", data);
@@ -17,12 +17,12 @@ export function nodeWebSocketBridge(
     });
 
     ws.on("message", function (msg) {
-      console.info("WebSocket message", arguments);
+      console.info("WebSocket message", msg);
       bus.event(JSON.parse(msg as string));
     });
 
     ws.on("close", function () {
-      console.info("WebSocket close", arguments);
+      console.info("WebSocket close");
       removeListener();
     });
   };

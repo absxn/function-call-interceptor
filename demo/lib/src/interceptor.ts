@@ -1,7 +1,6 @@
 import {
   InterceptBus,
   InterceptedFunction,
-  CaptureEvent,
   InterceptOptions,
   RemoveListener,
   Trigger,
@@ -17,6 +16,7 @@ function busEvents(
 ): { onDispatch: (handler: DispatchHandler) => void; capture: CaptureHandler } {
   return {
     onDispatch(eventListener) {
+      // eslint-disable-next-line prefer-const
       let removeListener: RemoveListener;
       const listener = (event: DispatchEvent) => {
         // Handle only own events
@@ -55,6 +55,7 @@ export function intercept<
 
     const events = busEvents(eventBus, invocationUuid);
 
+    // eslint-disable-next-line prefer-rest-params
     const originalArgs = Array.from(arguments);
 
     const uuidString = `${interceptorUuid.split("-")[0]}.${
@@ -93,10 +94,11 @@ export function intercept<
     });
 
     // Return interceptor
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve) => {
       // Bypass never calls the original code
       const returnValue = await (options.trigger === Trigger.bypass
-        ? Promise.resolve<any>("???") // <V> may be anything
+        ? Promise.resolve<string>("???") // <V> may be anything
         : (() => {
             console.info(
               `[${uuidString}] Calling function(${originalArgs
