@@ -5,7 +5,7 @@
   "main": "index.ts",
   "private": true,
   "scripts": {
-    "lint": "eslint demo/*/src/* --fix",
+    "lint": "eslint \"demo/*/src/**\" --fix",
     "format": "prettier --write \"**/*.{ts,css,tsx,json,md}\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "concurrently --names \"APP,API,LIB,CLI\" -c \"bgBlue.bold,bgMagenta.bold,bgRed.bold,bgYellow.bold\" \"(cd demo/app && yarn start)\" \"(cd demo/api && yarn start)\" \"(cd demo/lib && yarn watch)\" \"(cd demo/cli-web && yarn watch)\""
@@ -27,7 +27,7 @@
   "dependencies": {},
   "husky": {
     "hooks": {
-      "pre-commit": "prettier --check \"**/*.{ts,css,tsx,json,md}\" && eslint demo/*/src/*"
+      "pre-commit": "prettier --check \"**/*.{ts,css,tsx,json,md}\" && eslint \"demo/*/src/**\""
     }
   }
 }
