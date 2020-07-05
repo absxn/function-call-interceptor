@@ -16,5 +16,10 @@
     "react/prop-types": 0,
     "semi": ["error", "always"],
     "quotes": [2, "double"]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   }
 }
