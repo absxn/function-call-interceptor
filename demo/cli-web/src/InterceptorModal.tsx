@@ -534,17 +534,30 @@ class InterceptorModal extends React.Component<
   }
 }
 
+interface RenderProps {
+  domId: string;
+  visible: boolean;
+  queue: EventQueue;
+  hooks: ActiveHooks;
+  respond: DispatchSubmitHandler;
+  onHookAdd: OnHookAdd;
+  onHookRemove: OnHookRemove;
+  onToggleVisible: OnToggleVisible;
+}
+
 // https://stackoverflow.com/a/2117523
-function render(
-  domId: string,
-  visible: boolean,
-  queue: EventQueue,
-  hooks: ActiveHooks,
-  respond: DispatchSubmitHandler,
-  onHookAdd: OnHookAdd,
-  onHookRemove: OnHookRemove,
-  onToggleVisible: OnToggleVisible
-) {
+function render(props: RenderProps) {
+  const {
+    queue,
+    hooks,
+    visible,
+    domId,
+    onToggleVisible,
+    respond,
+    onHookAdd,
+    onHookRemove,
+  } = props;
+
   if (queue.length === 0 && hooks.length === 0 && visible === false) {
     unmount(domId);
     return;
@@ -553,7 +566,9 @@ function render(
   if (!visible) {
     return ReactDOM.render(
       <React.StrictMode>
-        <button onClick={() => onToggleVisible(!visible)}>Show dispatcher (<code>`</code>)</button>
+        <button onClick={() => onToggleVisible(!visible)}>
+          Show dispatcher (<code>`</code>)
+        </button>
       </React.StrictMode>,
       document.getElementById(domId)
     );
@@ -600,7 +615,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
   function onToggleVisible(isVisible: boolean) {
     visible = isVisible;
 
-    render(
+    render({
       domId,
       visible,
       queue,
@@ -608,8 +623,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       respond,
       onHookAdd,
       onHookRemove,
-      onToggleVisible
-    );
+      onToggleVisible,
+    });
   }
 
   document.addEventListener(
@@ -620,7 +635,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       }
 
       if (visible) {
-        render(
+        render({
           domId,
           visible,
           queue,
@@ -628,8 +643,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
           respond,
           onHookAdd,
           onHookRemove,
-          onToggleVisible
-        );
+          onToggleVisible,
+        });
       } else {
         unmount(domId);
       }
@@ -646,7 +661,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       hookConfiguration: { hook: hookSetup.action, delayMs: hookSetup.delayMs },
     });
 
-    render(
+    render({
       domId,
       visible,
       queue,
@@ -654,8 +669,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
       respond,
       onHookAdd,
       onHookRemove,
-      onToggleVisible
-    );
+      onToggleVisible,
+    });
   };
 
   const onHookRemove: OnHookRemove = (removeIndex, skipRender = false) => {
@@ -666,7 +681,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     }
 
     if (!skipRender) {
-      render(
+      render({
         domId,
         visible,
         queue,
@@ -674,8 +689,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         respond,
         onHookAdd,
         onHookRemove,
-        onToggleVisible
-      );
+        onToggleVisible,
+      });
     }
   };
 
@@ -702,7 +717,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     unmount(domId);
 
     if (queue.length > 0) {
-      render(
+      render({
         domId,
         visible,
         queue,
@@ -710,8 +725,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         respond,
         onHookAdd,
         onHookRemove,
-        onToggleVisible
-      );
+        onToggleVisible,
+      });
     }
   };
 
@@ -723,7 +738,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     if (eventToRemove >= 0) {
       queue.splice(eventToRemove, 1);
       if (queue.length > 0) {
-        render(
+        render({
           domId,
           visible,
           queue,
@@ -731,8 +746,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
           respond,
           onHookAdd,
           onHookRemove,
-          onToggleVisible
-        );
+          onToggleVisible,
+        });
       } else {
         unmount(domId);
       }
@@ -769,7 +784,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
       }
 
-      render(
+      render({
         domId,
         visible,
         queue,
@@ -777,8 +792,8 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         respond,
         onHookAdd,
         onHookRemove,
-        onToggleVisible
-      );
+        onToggleVisible,
+      });
     } else {
       console.info("Ignoring event, not matching a hook");
     }
