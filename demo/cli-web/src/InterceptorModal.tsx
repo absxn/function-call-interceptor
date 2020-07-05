@@ -102,58 +102,6 @@ type HookConfiguration = {
   delayMs: number;
 };
 
-const HookSelector: React.FC<{
-  selected: HookConfiguration;
-  onChange: (active: HookConfiguration) => void;
-}> = (props) => {
-  const { hook, delayMs } = props.selected;
-  return (
-    <ul style={{ listStyle: "none", padding: 0 }}>
-      <li>
-        <label>
-          <input
-            name="hook"
-            value="suspend"
-            type="radio"
-            checked={hook === "suspend"}
-            onChange={(e) => props.onChange({ hook: "suspend", delayMs })}
-          />{" "}
-          Suspend (default)
-        </label>
-      </li>
-      <li>
-        <label>
-          <input
-            name="hook"
-            value="pass-through"
-            type="radio"
-            checked={hook === "pass-through"}
-            onChange={(e) => props.onChange({ hook: "pass-through", delayMs })}
-          />{" "}
-          Pass-through
-        </label>
-      </li>
-      <li>
-        <label>
-          Dispatch delay
-          <input
-            name="delay"
-            value={delayMs}
-            type="text"
-            onChange={(e) =>
-              props.onChange({
-                hook: hook,
-                delayMs: parseInt(e.currentTarget.value, 10),
-              })
-            }
-          />
-          ms
-        </label>
-      </li>
-    </ul>
-  );
-};
-
 interface HookDefinitionState {
   triggerString: string;
   uuidMaskString: string;
@@ -434,10 +382,6 @@ class DispatchModal extends React.Component<
         <h2>
           Hook for <code>{interceptEvent.interceptorUuid}</code>
         </h2>
-        <HookSelector
-          selected={this.state.hookConfiguration}
-          onChange={(hookConfiguration) => this.setState({ hookConfiguration })}
-        />
         <button
           disabled={this.state.editedData === originalData}
           onClick={() => {
