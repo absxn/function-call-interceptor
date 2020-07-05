@@ -24,7 +24,7 @@ type DispatchSubmitHandler = (
 
 interface DispatchModalProps {
   visible: boolean;
-  onDispatch: DispatchSubmitHandler;
+  onDispatchSubmit: DispatchSubmitHandler;
   queue: EventQueue;
   hooks: ActiveHooks;
 }
@@ -415,7 +415,7 @@ class DispatchModal extends React.Component<
                     rv: JSON.parse(editedData),
                   };
 
-            this.props.onDispatch(activeEvent, response, {
+            this.props.onDispatchSubmit(activeEvent, response, {
               ...this.state.hookConfiguration,
             });
           }}
@@ -444,7 +444,7 @@ class DispatchModal extends React.Component<
 
 interface InterceptorModalProps {
   visible: boolean;
-  onDispatch: DispatchSubmitHandler;
+  onDispatchSubmit: DispatchSubmitHandler;
   queue: EventQueue;
   hooks: ActiveHooks;
   onHookAdd: OnHookAdd;
@@ -483,7 +483,7 @@ interface RenderProps {
   visible: boolean;
   queue: EventQueue;
   hooks: ActiveHooks;
-  respond: DispatchSubmitHandler;
+  onDispatchSubmit: DispatchSubmitHandler;
   onHookAdd: OnHookAdd;
   onHookRemove: OnHookRemove;
   onToggleVisible: OnToggleVisible;
@@ -497,7 +497,7 @@ function render(props: RenderProps) {
     visible,
     domId,
     onToggleVisible,
-    respond,
+    onDispatchSubmit,
     onHookAdd,
     onHookRemove,
   } = props;
@@ -524,7 +524,7 @@ function render(props: RenderProps) {
         hooks={hooks}
         queue={queue}
         visible={true}
-        onDispatch={respond}
+        onDispatchSubmit={onDispatchSubmit}
         onHookAdd={onHookAdd}
         onHookRemove={onHookRemove}
       />
@@ -566,7 +566,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
     }
   };
 
-  const respond: DispatchSubmitHandler = (
+  const onDispatchSubmit: DispatchSubmitHandler = (
     eventToRemove,
     event,
     hookConfiguration
@@ -592,7 +592,7 @@ export function mountInterceptorClient(domId: string, eventBus: InterceptBus) {
         hitCount: 0,
       },
     ],
-    respond,
+    onDispatchSubmit,
     onHookAdd,
     onHookRemove,
     onToggleVisible,
