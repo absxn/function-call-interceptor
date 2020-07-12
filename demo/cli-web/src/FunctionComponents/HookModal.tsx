@@ -11,13 +11,26 @@ interface HookModalProps {
 const HookModal: React.FC<HookModalProps> = (props) => (
   <>
     <table style={{ width: "100%" }}>
+      <thead>
+        <tr>
+          <th>Capture mask</th>
+          <th>Hook type</th>
+          <th>Delay (ms)</th>
+          <th>Hits</th>
+          <th>Hits left</th>
+        </tr>
+      </thead>
       <tbody>
         {props.hooks.map((hook, index) => (
-          <tr key={index}>
+          <tr
+            key={index}
+            style={{ color: hook.hitLimit === 0 ? "gray" : "black" }}
+          >
             <td>{hook.uuidMask.toString()}</td>
             <td>{hook.hookConfiguration.hook}</td>
             <td>{hook.hookConfiguration.delayMs}ms</td>
             <td>{hook.hitCount}</td>
+            <td>{hook.hitLimit}</td>
             <td
               style={{
                 color: "red",

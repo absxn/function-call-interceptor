@@ -13,12 +13,14 @@ export interface HookSetup {
   uuidMask: RegExp;
   delayMs: number;
   action: HookTypes;
+  hitLimit: number;
 }
 
 export type ActiveHooks = Array<{
   uuidMask: RegExp;
   hookConfiguration: HookConfiguration;
   hitCount: number;
+  hitLimit: number; // -1 = no limit, 0 = disable hook
 }>;
 
 export type DispatchSubmitHandler = (

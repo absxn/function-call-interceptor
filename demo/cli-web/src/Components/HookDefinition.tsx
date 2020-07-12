@@ -5,6 +5,7 @@ interface HookDefinitionState {
   triggerString: string;
   uuidMaskString: string;
   delayString: string;
+  hitLimitString: string;
 }
 
 interface HookDefinitionProps {
@@ -19,6 +20,7 @@ export default class HookDefinition extends React.Component<
     triggerString: "suspend",
     uuidMaskString: ".*",
     delayString: "0",
+    hitLimitString: "-1",
     isValid: true,
   };
 
@@ -75,12 +77,29 @@ export default class HookDefinition extends React.Component<
             value={this.state.delayString}
           />
         </label>
+        <label>
+          Hit limit
+          <input
+            type="text"
+            onChange={(e) =>
+              this.setState(
+                {
+                  hitLimitString: e.currentTarget.value,
+                  isValid: false,
+                },
+                this.validate
+              )
+            }
+            value={this.state.hitLimitString}
+          />
+        </label>
         <button
           onClick={() =>
             this.props.onAdd({
               action: this.state.triggerString as HookTypes,
               delayMs: parseInt(this.state.delayString, 0),
               uuidMask: new RegExp(this.state.uuidMaskString),
+              hitLimit: parseInt(this.state.hitLimitString, 0),
             })
           }
           disabled={!this.state.isValid}
@@ -109,6 +128,7 @@ export default class HookDefinition extends React.Component<
     this.setState({
       isValid:
         !isNaN(parseInt(this.state.delayString, 10)) &&
+        !isNaN(parseInt(this.state.hitLimitString, 10)) &&
         isValidRegExp(this.state.uuidMaskString) &&
         isValidTrigger(this.state.triggerString),
     });

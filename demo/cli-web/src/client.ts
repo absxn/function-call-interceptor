@@ -27,6 +27,7 @@ export function mountInterceptorClient(
     state.hooks.unshift({
       uuidMask: hookSetup.uuidMask,
       hitCount: 0,
+      hitLimit: hookSetup.hitLimit,
       hookConfiguration: { hook: hookSetup.action, delayMs: hookSetup.delayMs },
     });
 
@@ -53,6 +54,7 @@ export function mountInterceptorClient(
       state.hooks.unshift({
         uuidMask: new RegExp(`^${event.interceptorUuid}$`),
         hitCount: 0,
+        hitLimit: -1,
         hookConfiguration,
       });
     }
@@ -75,6 +77,7 @@ export function mountInterceptorClient(
         hookConfiguration: { delayMs: 0, hook: "suspend" },
         uuidMask: /.*/,
         hitCount: 0,
+        hitLimit: -1,
       },
     ],
     onDispatchSubmit,
@@ -120,8 +123,8 @@ export function mountInterceptorClient(
   });
 
   eventBus.onCapture((event) => {
-    const hookIndex = state.hooks.findIndex((hook) =>
-      hook.uuidMask.test(event.interceptorUuid)
+    const hookIndex = state.hooks.findIndex(
+      (hook) => hook.uuidMask.test(event.interceptorUuid) && hook.hitLimit != 0
     );
     if (hookIndex > -1) {
       const hook = state.hooks[hookIndex];
@@ -136,6 +139,9 @@ export function mountInterceptorClient(
 
       if (hookType === "pass-through") {
         hook.hitCount++;
+        if (hook.hitLimit > 0) {
+          hook.hitLimit--;
+        }
         setTimeout(() => {
           eventBus.dispatch({
             ...event,
@@ -145,9 +151,14 @@ export function mountInterceptorClient(
         }, delayMs);
       } else if (hookType === "suspend") {
         hook.hitCount++;
+        if (hook.hitLimit > 0) {
+          hook.hitLimit--;
+        }
         state.queue.push(event);
       } else {
-        `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
+        console.error(
+          `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`
+        );
       }
 
       render(state);
