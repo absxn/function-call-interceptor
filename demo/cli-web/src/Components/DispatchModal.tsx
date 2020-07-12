@@ -121,6 +121,7 @@ export default class DispatchModal extends React.Component<
               style={{ ...EditorStyle, ...(!validInput ? ErrorStyle : {}) }}
               onChange={this.updateValue.bind(this)}
               value={this.state.editedData}
+              disabled={!interceptEvent.dispatchOptionOverride}
             />
             <pre>) =&gt; ?</pre>
           </>
@@ -140,6 +141,7 @@ export default class DispatchModal extends React.Component<
               style={{ ...EditorStyle, ...(!validInput ? ErrorStyle : {}) }}
               onChange={this.updateValue.bind(this)}
               value={this.state.editedData}
+              disabled={!interceptEvent.dispatchOptionOverride}
             />
           </>
         )}
