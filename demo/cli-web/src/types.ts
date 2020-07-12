@@ -2,17 +2,17 @@ import { CaptureEvent, DispatchEvent } from "@interceptor/lib";
 
 export type CapturedEvents = Array<CaptureEvent>;
 
-export type HookTypes = "suspend" | "pass-through";
+export type Action = "suspend" | "pass-through";
 
 export type HookConfiguration = {
-  hook: HookTypes;
+  action: Action;
   delayMs: number;
 };
 
 export interface HookSetup {
   uuidMask: RegExp;
   delayMs: number;
-  action: HookTypes;
+  action: Action;
   hitLimit: number;
 }
 

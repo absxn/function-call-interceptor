@@ -14,7 +14,7 @@ const HookModal: React.FC<HookModalProps> = (props) => (
       <thead>
         <tr>
           <th>Capture mask</th>
-          <th>Hook type</th>
+          <th>Action</th>
           <th>Delay (ms)</th>
           <th>Hits</th>
           <th>Hits left</th>
@@ -27,7 +27,7 @@ const HookModal: React.FC<HookModalProps> = (props) => (
             style={{ color: hook.hitLimit === 0 ? "gray" : "black" }}
           >
             <td>{hook.uuidMask.toString()}</td>
-            <td>{hook.hookConfiguration.hook}</td>
+            <td>{hook.hookConfiguration.action}</td>
             <td>{hook.hookConfiguration.delayMs}ms</td>
             <td>{hook.hitCount}</td>
             <td>{hook.hitLimit}</td>

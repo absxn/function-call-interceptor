@@ -23,19 +23,22 @@ export function mountInterceptorClient(
   eventBus: InterceptBus
 ): void {
   const onHookAdd = (hookSetup: HookSetup) => {
-    // Prepend so latest hook will be applied first if it matches the mask
+    // Prepend so latest action will be applied first if it matches the mask
     state.hooks.unshift({
       uuidMask: hookSetup.uuidMask,
       hitCount: 0,
       hitLimit: hookSetup.hitLimit,
-      hookConfiguration: { hook: hookSetup.action, delayMs: hookSetup.delayMs },
+      hookConfiguration: {
+        action: hookSetup.action,
+        delayMs: hookSetup.delayMs,
+      },
     });
 
     render(state);
   };
 
   const onHookRemove: OnHookRemove = (removeIndex, skipRender = false) => {
-    // Default submit will set hook as "suspend", i.e. no change
+    // Default submit will set action as "suspend", i.e. no change
     if (removeIndex >= 0) {
       state.hooks.splice(removeIndex, 1);
     }
@@ -74,7 +77,7 @@ export function mountInterceptorClient(
     queue: [],
     hooks: [
       {
-        hookConfiguration: { delayMs: 0, hook: "suspend" },
+        hookConfiguration: { delayMs: 0, action: "suspend" },
         uuidMask: /.*/,
         hitCount: 0,
         hitLimit: -1,
@@ -129,15 +132,15 @@ export function mountInterceptorClient(
     if (hookIndex > -1) {
       const hook = state.hooks[hookIndex];
       const delayMs = hook.hookConfiguration.delayMs;
-      const hookType = hook.hookConfiguration.hook;
+      const action = hook.hookConfiguration.action;
 
       console.info(
-        `Triggering ${hookType} hook (#${hook.hitCount}) for "${
+        `Triggering ${action} action (#${hook.hitCount}) for "${
           hook.uuidMask
         }"${delayMs > 0 ? ` delay ${delayMs}ms` : ""}`
       );
 
-      if (hookType === "pass-through") {
+      if (action === "pass-through") {
         hook.hitCount++;
         if (hook.hitLimit > 0) {
           hook.hitLimit--;
@@ -149,7 +152,7 @@ export function mountInterceptorClient(
             sourceUuid: [],
           });
         }, delayMs);
-      } else if (hookType === "suspend") {
+      } else if (action === "suspend") {
         hook.hitCount++;
         if (hook.hitLimit > 0) {
           hook.hitLimit--;
@@ -157,7 +160,7 @@ export function mountInterceptorClient(
         state.queue.push(event);
       } else {
         console.error(
-          `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`
+          `Ignoring unsupported ${action} action for "${hook.uuidMask}"`
         );
       }
 

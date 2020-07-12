@@ -1,8 +1,8 @@
 import React from "react";
-import { HookTypes, OnHookAdd } from "../types";
+import { Action, OnHookAdd } from "../types";
 
 interface HookDefinitionState {
-  triggerString: string;
+  actionString: Action;
   uuidMaskString: string;
   delayString: string;
   hitLimitString: string;
@@ -17,7 +17,7 @@ export default class HookDefinition extends React.Component<
   HookDefinitionState & { isValid: boolean }
 > {
   state = {
-    triggerString: "suspend",
+    actionString: "suspend" as const,
     uuidMaskString: ".*",
     delayString: "0",
     hitLimitString: "-1",
@@ -28,18 +28,18 @@ export default class HookDefinition extends React.Component<
     return (
       <fieldset>
         <label>
-          Trigger
+          Action
           <select
             onChange={(e) =>
               this.setState(
                 {
-                  triggerString: e.currentTarget.value,
+                  actionString: e.currentTarget.value as Action,
                   isValid: false,
                 },
                 this.validate
               )
             }
-            value={this.state.triggerString}
+            value={this.state.actionString}
           >
             <option value="suspend">Suspend</option>
             <option value="pass-through">Pass-through</option>
@@ -96,7 +96,7 @@ export default class HookDefinition extends React.Component<
         <button
           onClick={() =>
             this.props.onAdd({
-              action: this.state.triggerString as HookTypes,
+              action: this.state.actionString as Action,
               delayMs: parseInt(this.state.delayString, 0),
               uuidMask: new RegExp(this.state.uuidMaskString),
               hitLimit: parseInt(this.state.hitLimitString, 0),
@@ -111,9 +111,9 @@ export default class HookDefinition extends React.Component<
   }
 
   private validate() {
-    function isValidTrigger(trigger: string) {
-      const valid: HookTypes[] = ["suspend", "pass-through"];
-      return valid.includes(trigger as HookTypes);
+    function isValidTrigger(action: string) {
+      const valid: Action[] = ["suspend", "pass-through"];
+      return valid.includes(action as Action);
     }
 
     function isValidRegExp(regExpString: string) {
@@ -130,7 +130,7 @@ export default class HookDefinition extends React.Component<
         !isNaN(parseInt(this.state.delayString, 10)) &&
         !isNaN(parseInt(this.state.hitLimitString, 10)) &&
         isValidRegExp(this.state.uuidMaskString) &&
-        isValidTrigger(this.state.triggerString),
+        isValidTrigger(this.state.actionString),
     });
   }
 }

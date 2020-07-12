@@ -151,7 +151,7 @@ export default class DispatchModal extends React.Component<
               this.setState({
                 hookConfiguration:
                   hookConfiguration === null
-                    ? { hook: "pass-through", delayMs: 0 }
+                    ? { action: "pass-through", delayMs: 0 }
                     : null,
               });
             }}
