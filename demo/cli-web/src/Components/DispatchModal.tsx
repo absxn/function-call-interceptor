@@ -143,9 +143,6 @@ export default class DispatchModal extends React.Component<
             />
           </>
         )}
-        <h2>
-          Hook for <code>{interceptEvent.interceptorUuid}</code>
-        </h2>
         <button
           disabled={this.state.editedData === originalData}
           onClick={() => {
