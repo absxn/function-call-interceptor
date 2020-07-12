@@ -144,6 +144,7 @@ export function mountInterceptorClient(
           });
         }, delayMs);
       } else if (hookType === "suspend") {
+        hook.hitCount++;
         state.queue.push(event);
       } else {
         `Ignoring unsupported ${hookType} hook for "${hook.uuidMask}"`;
