@@ -33,7 +33,7 @@ interface DispatchModalProps {
 interface DispatchModalState {
   activeEvent: number | -1;
   editedData: string;
-  hookConfiguration: HookConfiguration;
+  hookConfiguration: HookConfiguration | null;
 }
 
 function loadData(queue: CaptureEvent[], index: number): string {
@@ -62,11 +62,12 @@ export default class DispatchModal extends React.Component<
   state = {
     activeEvent: 0,
     editedData: loadData(this.props.queue, 0),
-    hookConfiguration: { hook: "suspend" as const, delayMs: 0 },
+    hookConfiguration: null,
   };
 
   render(): JSX.Element {
     const activeEvent = this.state.activeEvent;
+    const hookConfiguration = this.state.hookConfiguration;
     const queue = this.props.queue;
     const interceptEvent = queue[this.state.activeEvent];
     const validInput = isValidJsonString(this.state.editedData);
@@ -91,7 +92,6 @@ export default class DispatchModal extends React.Component<
         </option>
       );
     };
-
     return (
       <>
         <h2>Queue</h2>
@@ -143,6 +143,22 @@ export default class DispatchModal extends React.Component<
             />
           </>
         )}
+        <label style={{ display: "block" }}>
+          <input
+            type="checkbox"
+            checked={hookConfiguration !== null}
+            onChange={() => {
+              this.setState({
+                hookConfiguration:
+                  hookConfiguration === null
+                    ? { hook: "pass-through", delayMs: 0 }
+                    : null,
+              });
+            }}
+          />{" "}
+          Add pass-through filter for{" "}
+          <code>{interceptEvent.interceptorUuid}</code>
+        </label>
         <button
           disabled={this.state.editedData === originalData}
           onClick={() => {
@@ -176,9 +192,11 @@ export default class DispatchModal extends React.Component<
                     rv: JSON.parse(editedData),
                   };
 
-            this.props.onDispatchSubmit(activeEvent, response, {
-              ...this.state.hookConfiguration,
-            });
+            this.props.onDispatchSubmit(
+              activeEvent,
+              response,
+              hookConfiguration
+            );
           }}
         >
           Dispatch{!validInput && " (malformed JSON input)"}

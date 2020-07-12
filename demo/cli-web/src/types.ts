@@ -24,7 +24,7 @@ export type ActiveHooks = Array<{
 export type DispatchSubmitHandler = (
   eventToRemove: number,
   event: DispatchEvent,
-  hookConfiguration: HookConfiguration
+  hookConfiguration: HookConfiguration | null
 ) => void;
 
 export type OnHookAdd = (hookSetup: HookSetup) => void;

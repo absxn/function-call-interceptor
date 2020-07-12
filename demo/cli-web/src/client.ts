@@ -44,7 +44,18 @@ export function mountInterceptorClient(
     }
   };
 
-  const onDispatchSubmit: DispatchSubmitHandler = (eventToRemove, event) => {
+  const onDispatchSubmit: DispatchSubmitHandler = (
+    eventToRemove,
+    event,
+    hookConfiguration
+  ) => {
+    if (hookConfiguration !== null) {
+      state.hooks.unshift({
+        uuidMask: new RegExp(`^${event.interceptorUuid}$`),
+        hitCount: 0,
+        hookConfiguration,
+      });
+    }
     state.queue.splice(eventToRemove, 1);
 
     eventBus.dispatch(event);
