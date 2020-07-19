@@ -359,7 +359,9 @@ class App extends React.Component<AppProps, AppState> {
   }
 }
 
-const browserEventBus = new EventBus({ uuid: "app" });
+const browserEventBus = new EventBus({
+  uuid: `app-${Math.floor(Math.random() * 10000)}`,
+});
 
 browserWebSocketBridge("ws://localhost:3001/ws", browserEventBus);
 
