@@ -13,7 +13,10 @@ import {
 function busEvents(
   bus: InterceptBus,
   invocationUuid: string
-): { onDispatch: (handler: DispatchHandler) => void; capture: CaptureHandler } {
+): {
+  onDispatch: (handler: DispatchHandler) => RemoveListener;
+  capture: CaptureHandler;
+} {
   return {
     onDispatch(eventListener) {
       // eslint-disable-next-line prefer-const
@@ -32,11 +35,17 @@ function busEvents(
         removeListener();
       };
       removeListener = bus.onDispatch(listener);
+
+      return removeListener;
     },
     capture(event) {
       bus.capture(event);
     },
   };
+}
+
+function expireOption(timeoutMs?: number) {
+  return timeoutMs ? { expireAt: Date.now() + timeoutMs } : {};
 }
 
 export type Interceptor<
@@ -74,7 +83,10 @@ export function intercept<
             .join(", ")}) => ?`
         );
 
-        events.onDispatch((callEvent) => {
+        let timeoutHandle;
+
+        const removeListener = events.onDispatch((callEvent) => {
+          clearTimeout(timeoutHandle);
           resolve(callEvent.args);
         });
 
@@ -87,7 +99,16 @@ export function intercept<
           sourceUuid: [],
           dispatchOptionOverride: options.dispatchOptionOverride,
           dispatchOptionsArguments: options.dispatchOptionsArguments,
+          ...expireOption(options.timeoutMs),
         });
+
+        if (options.timeoutMs) {
+          timeoutHandle = setTimeout(() => {
+            console.info(`[${uuidString}] Call timeout`);
+            removeListener();
+            resolve(originalArgs);
+          }, options.timeoutMs);
+        }
       } else {
         resolve(originalArgs);
       }
@@ -131,16 +152,28 @@ export function intercept<
           sourceUuid: [],
           dispatchOptionOverride: options.dispatchOptionOverride,
           dispatchOptionsReturnValue: options.dispatchOptionsReturnValue,
+          ...expireOption(options.timeoutMs),
         });
 
-        events.onDispatch((event) => {
+        let timeoutHandle;
+
+        const removeListener = events.onDispatch((event) => {
           if (event.trigger !== Trigger.return) {
             throw new Error(
               `Expected return event, got ${JSON.stringify(event)}`
             );
           }
+          clearTimeout(timeoutHandle);
           resolve(event.rv);
         });
+
+        if (options.timeoutMs) {
+          timeoutHandle = setTimeout(() => {
+            console.info(`[${uuidString}] Return timeout`);
+            removeListener();
+            resolve(returnValue);
+          }, options.timeoutMs);
+        }
       } else {
         resolve(returnValue);
       }

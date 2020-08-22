@@ -51,23 +51,33 @@ const sum = (ns: number[]) =>
 app.post(
   "/interceptor-demo/call",
   demoWrapper((numbers) =>
-    intercept(sum, { uuid: "apicall", trigger: Trigger.call })(numbers)
+    intercept(sum, {
+      uuid: "apicall",
+      trigger: Trigger.call,
+      timeoutMs: 2001,
+    })(numbers)
   )
 );
 
 app.post(
   "/interceptor-demo/return",
-  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.return })(numbers))
+  demoWrapper((numbers) =>
+    intercept(sum, { trigger: Trigger.return, timeoutMs: 10000 })(numbers)
+  )
 );
 
 app.post(
   "/interceptor-demo/both",
-  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.both })(numbers))
+  demoWrapper((numbers) =>
+    intercept(sum, { trigger: Trigger.both, timeoutMs: 10000 })(numbers)
+  )
 );
 
 app.post(
   "/interceptor-demo/bypass",
-  demoWrapper((numbers) => intercept(sum, { trigger: Trigger.bypass })(numbers))
+  demoWrapper((numbers) =>
+    intercept(sum, { trigger: Trigger.bypass, timeoutMs: 10000 })(numbers)
+  )
 );
 
 const port = 3001;

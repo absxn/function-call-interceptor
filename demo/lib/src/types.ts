@@ -113,40 +113,42 @@ export type InterceptOptions<C extends InterceptedFunction> =
   | InterceptOptionsBoth<C>
   | InterceptOptionsBypass<C>;
 
-export interface InterceptOptionsCall<C extends InterceptedFunction> {
+interface CommonInterceptOptions {
+  timeoutMs?: number;
+  uuid?: string;
+  dispatchOptionOverride?: boolean;
+}
+
+export interface InterceptOptionsCall<C extends InterceptedFunction>
+  extends CommonInterceptOptions {
   trigger: Trigger.call;
-  uuid?: string;
   dispatchOptionsArguments?: Array<{ label?: string; value: Parameters<C> }>;
-  dispatchOptionOverride?: boolean;
 }
 
-export interface InterceptOptionsReturn<C extends InterceptedFunction> {
+export interface InterceptOptionsReturn<C extends InterceptedFunction>
+  extends CommonInterceptOptions {
   trigger: Trigger.return;
-  uuid?: string;
   dispatchOptionsReturnValue?: Array<{
     label?: string;
     value: UnwrapPromise<ReturnType<C>>;
   }>;
-  dispatchOptionOverride?: boolean;
 }
 
-export interface InterceptOptionsBoth<C extends InterceptedFunction> {
+export interface InterceptOptionsBoth<C extends InterceptedFunction>
+  extends CommonInterceptOptions {
   trigger: Trigger.both;
-  uuid?: string;
   dispatchOptionsArguments?: Array<{ label?: string; value: Parameters<C> }>;
   dispatchOptionsReturnValue?: Array<{
     label?: string;
     value: UnwrapPromise<ReturnType<C>>;
   }>;
-  dispatchOptionOverride?: boolean;
 }
 
-export interface InterceptOptionsBypass<C extends InterceptedFunction> {
+export interface InterceptOptionsBypass<C extends InterceptedFunction>
+  extends CommonInterceptOptions {
   trigger: Trigger.bypass;
-  uuid?: string;
   dispatchOptionsReturnValue?: Array<{
     label?: string;
     value: UnwrapPromise<ReturnType<C>>;
   }>;
-  dispatchOptionOverride?: boolean;
 }
